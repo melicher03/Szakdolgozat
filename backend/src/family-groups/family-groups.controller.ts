@@ -19,20 +19,20 @@ export class FamilyGroupsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<FamilyGroup> {
+  findOne(@Param('id') id: string): Promise<FamilyGroup> {
     return this.familyGroupsService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateFamilyGroupDto: UpdateFamilyGroupDto,
   ): Promise<FamilyGroup> {
     return this.familyGroupsService.update(id, updateFamilyGroupDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id') id: string): Promise<void> {
     return this.familyGroupsService.remove(id);
   }
 }

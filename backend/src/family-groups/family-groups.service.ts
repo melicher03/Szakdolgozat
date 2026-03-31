@@ -22,7 +22,7 @@ export class FamilyGroupsService {
   }
 
   async findOne(id: string): Promise<FamilyGroup> {
-    const familyGroup = await this.familyGroupsRepository.findOne({ where: { id } });
+    const familyGroup = await this.familyGroupsRepository.findOne({ where: { id: Number(id) } });
     if (!familyGroup) {
       throw new NotFoundException(`Family group with id ${id} was not found`);
     }
