@@ -29,6 +29,16 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
 
+  const scrollToBottom = () => {
+    const container = document.getElementById('chat-scroll-container');
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   useEffect(() => {
     const socket = io('http://localhost:3000', {
       reconnection: true,
@@ -79,17 +89,29 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
     currentSocket.emit('send-message', message);
     setInput('');
+    requestAnimationFrame(() => scrollToBottom());
   };
 
   return (
-    <Stack spacing={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Stack
+      spacing={2}
+      sx={{
+        maxHeight: '70vh',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <Typography variant="body2" color={isConnected ? 'green' : 'red'}>
         {isConnected ? '🟢 Connected' : '🔴 Disconnected'} to {familyGroupName}
       </Typography>
 
       <Box
+        id="chat-scroll-container"
         sx={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
           borderRadius: 1,
           p: 2,

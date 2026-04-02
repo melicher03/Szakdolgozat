@@ -1,16 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('family_groups')
 export class FamilyGroup {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column()
-  name: string;
+  name: string
 
   @Column({ type: 'simple-json' })
-  members: string[];
+  members: string[]
 
   @Column()
-  ownerId: string;
+  ownerId: string
 }

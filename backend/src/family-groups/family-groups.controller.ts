@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { FamilyGroup } from '../entities/family-group.entity';
-import { CreateFamilyGroupDto } from './dto/create-family-group.dto';
-import { UpdateFamilyGroupDto } from './dto/update-family-group.dto';
-import { FamilyGroupsService } from './family-groups.service';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common'
+import { FamilyGroup } from '../entities/family-group.entity'
+import { CreateFamilyGroupDto } from './dto/create-family-group.dto'
+import { UpdateFamilyGroupDto } from './dto/update-family-group.dto'
+import { FamilyGroupsService } from './family-groups.service'
 
 @Controller('family-groups')
 export class FamilyGroupsController {
@@ -10,17 +10,17 @@ export class FamilyGroupsController {
 
   @Post()
   create(@Body() createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    return this.familyGroupsService.create(createFamilyGroupDto);
+    return this.familyGroupsService.create(createFamilyGroupDto)
   }
 
   @Get()
   findAll(): Promise<FamilyGroup[]> {
-    return this.familyGroupsService.findAll();
+    return this.familyGroupsService.findAll()
   }
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<FamilyGroup> {
-    return this.familyGroupsService.findOne(id);
+    return this.familyGroupsService.findOne(id)
   }
 
   @Patch(':id')
@@ -28,11 +28,11 @@ export class FamilyGroupsController {
     @Param('id') id: string,
     @Body() updateFamilyGroupDto: UpdateFamilyGroupDto,
   ): Promise<FamilyGroup> {
-    return this.familyGroupsService.update(id, updateFamilyGroupDto);
+    return this.familyGroupsService.update(id, updateFamilyGroupDto)
   }
 
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
-    return this.familyGroupsService.remove(id);
+    return this.familyGroupsService.remove(id)
   }
 }

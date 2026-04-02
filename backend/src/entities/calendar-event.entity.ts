@@ -6,30 +6,30 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { FamilyGroup } from './family-group.entity';
+} from 'typeorm'
+import { FamilyGroup } from './family-group.entity'
 
 @Entity('calendar_events')
 export class CalendarEvent {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column()
-  title: string;
+  title: string
 
   @Column()
-  description?: string;
+  description?: string
 
   @Column({ type: "timestamp" })
-  startAt: Date;
+  startAt: Date
 
   @Column({ type: "timestamp" })
-  endAt: Date;
+  endAt: Date
 
   @Column()
-  familyGroupId: string;
+  familyGroupId: string
 
   @ManyToOne(() => FamilyGroup)
   @JoinColumn({ name: 'familyGroupId' })
-  familyGroup: FamilyGroup;
+  familyGroup: FamilyGroup
 }

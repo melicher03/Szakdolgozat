@@ -1,25 +1,25 @@
-import { IsBoolean, IsDateString, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, IsString, IsUUID, Length } from 'class-validator'
 
 export class UpdateCalendarEventDto {
   @IsOptional()
   @IsString()
   @Length(1, 150)
-  title?: string;
+  title?: string
 
   @IsOptional()
   @IsString()
   @Length(0, 2000)
-  description?: string;
+  description?: string
 
   @IsOptional()
   @IsDateString()
-  startAt?: string;
+  startAt?: string
 
   @IsOptional()
   @IsDateString()
-  endAt?: string;
+  endAt?: string
 
   @IsOptional()
   @IsUUID()
-  familyGroupId?: string;
+  familyGroupId?: string
 }

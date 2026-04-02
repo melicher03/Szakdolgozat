@@ -3,25 +3,25 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-} from 'typeorm';
+} from 'typeorm'
 
 @Entity('messages')
 export class Message {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: string
 
   @Column()
-  text: string;
+  text: string
 
   @Column()
-  senderId: string;
+  senderId: string
 
   @Column()
-  senderName: string;
+  senderName: string
 
   @Column()
-  familyGroupId: string;
+  familyGroupId: string
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt: Date
 }
