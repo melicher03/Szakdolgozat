@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Unique, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('family_groups')
+@Unique(['name'])
 export class FamilyGroup {
   @PrimaryGeneratedColumn()
   id: number

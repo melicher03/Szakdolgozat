@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { FamilyGroup } from '../entities/family-group.entity'
@@ -12,8 +12,20 @@ export class FamilyGroupsService {
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
   ) {}
 
-  create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    const familyGroup = this.familyGroupsRepository.create(createFamilyGroupDto)
+  async create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
+    const normalizedName = createFamilyGroupDto.name.trim();
+    const existing = await this.familyGroupsRepository.findOne({
+      where: { name: normalizedName },
+    });
+
+    if (existing) {
+      throw new ConflictException('Family group name already exists');
+    }
+
+    const familyGroup = this.familyGroupsRepository.create({
+      ...createFamilyGroupDto,
+      name: normalizedName,
+    })
     return this.familyGroupsRepository.save(familyGroup)
   }
 
@@ -31,6 +43,20 @@ export class FamilyGroupsService {
 
   async update(id: string, updateFamilyGroupDto: UpdateFamilyGroupDto): Promise<FamilyGroup> {
     const familyGroup = await this.findOne(id)
+
+    if (typeof updateFamilyGroupDto.name === 'string') {
+      const normalizedName = updateFamilyGroupDto.name.trim();
+      const existing = await this.familyGroupsRepository.findOne({
+        where: { name: normalizedName },
+      });
+
+      if (existing && existing.id !== familyGroup.id) {
+        throw new ConflictException('Family group name already exists');
+      }
+
+      updateFamilyGroupDto.name = normalizedName;
+    }
+
     Object.assign(familyGroup, updateFamilyGroupDto)
     return this.familyGroupsRepository.save(familyGroup)
   }

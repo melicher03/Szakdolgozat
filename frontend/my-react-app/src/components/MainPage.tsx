@@ -255,6 +255,7 @@ const MainSite: React.FC = () => {
                                             value={value}
                                             //onChange={(newValue) => setValue(newValue)}
                                             sx={{
+                                                width: '100%',
                                                 color: '#f7f7f7',
                                                 '& .MuiPickersDay-root': {
                                                     color: '#f7f7f7',

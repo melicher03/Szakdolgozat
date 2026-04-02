@@ -9,8 +9,8 @@ export class FamilyGroupsController {
   constructor(private readonly familyGroupsService: FamilyGroupsService) {}
 
   @Post()
-  create(@Body() createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    return this.familyGroupsService.create(createFamilyGroupDto)
+  async create(@Body() createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
+    return await this.familyGroupsService.create(createFamilyGroupDto)
   }
 
   @Get()

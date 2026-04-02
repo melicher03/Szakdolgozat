@@ -160,6 +160,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           maxRows={3}
           sx={{
             '& .MuiInputBase-input': { color: '#f7f7f7' },
+            '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#292d3b' },
+            }
           }}
         />
         <Button
