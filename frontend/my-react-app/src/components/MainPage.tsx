@@ -1,13 +1,31 @@
-import { CalendarMonth, Chat, Folder, RssFeed, Search, Image, Logout, InsertLink, Groups, MoreHoriz, Add } from "@mui/icons-material"
-import { Avatar, Box, Button, Card, Chip, Container, Divider, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, TextField, Typography } from "@mui/material"
-import { useState } from "react";
+import { CalendarMonth, Chat, Folder, RssFeed, Search, Image, Logout, InsertLink, Groups, Add } from "@mui/icons-material"
+import { Avatar, Box, Button, Card, Chip, Container, Divider, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, TextField, Typography } from "@mui/material"
+import { useEffect, useState } from "react";
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
+import "dayjs/locale/en-gb";
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 //import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
 import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
+import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
+
+type FamilyGroup = {
+    id: number;
+    name: string;
+    members: string[];
+    ownerId: string;
+};
+
+type CalendarEvent = {
+    id: number;
+    title: string;
+    description?: string;
+    startAt: string;
+    endAt: string;
+    familyGroupId: number;
+};
 
 const MainSite: React.FC = () => {
 
@@ -30,18 +48,6 @@ const MainSite: React.FC = () => {
         { text: 'Files', icon: <Folder /> },
     ]
 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const openOptions = Boolean(anchorEl);
-
-    const handleCloseOptions = () => {
-        setAnchorEl(null);
-    };
-
-    const handleDeleteFamilyGroup = (id: string) => () => {
-        //deleteFamilyGroup.mutate({ id })
-        setAnchorEl(null);
-    }
-
     const [openCreateFamilyGroup, setOpenCreateFamilyGroup] = useState(false);
     const [openCreateCalendarEvent, setOpenCreateCalendarEvent] = useState(false);
 
@@ -53,9 +59,30 @@ const MainSite: React.FC = () => {
         setOpenCreateCalendarEvent(false)
     }
 
-    //const chats = familyGroups.data?.items.map((item) => { return item.name })
+    const [familyGroups, setFamilyGroups] = useState<FamilyGroup[] | null>(null)
+    const [events, setEvents] = useState<CalendarEvent[] | null>(null)
 
-    //console.log(familyGroups.data?.items.map((item) => { return item.name }))
+    useEffect(() => {
+        const fetchGroups = async () => {
+            const response = await fetch("http://localhost:3000/family-groups");
+
+            const data = await response.json();
+            setFamilyGroups(data);
+        };
+        fetchGroups();
+    }, [openCreateFamilyGroup])
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            const response = await fetch("http://localhost:3000/calendar-events");
+
+            const data = await response.json();
+            setEvents(data);
+        };
+        fetchEvents();
+    }, [openCreateCalendarEvent])
+
+    console.log(events)
 
     const handleClickOpenCreateFamilyGroup = () => setOpenCreateFamilyGroup(true);
     const handleClickOpenCreateCalendarEvent = () => setOpenCreateCalendarEvent(true);
@@ -80,11 +107,11 @@ const MainSite: React.FC = () => {
                     cardStyle={cardStyle}
                 />
 
-                {/* <CreateCalendarEventDialog
+                <CreateCalendarEventDialog
                     open={openCreateCalendarEvent}
                     onClose={handleCloseCreateCalendarEvent}
                     cardStyle={cardStyle}
-                /> */}
+                />
 
                 <Box
                     sx={{
@@ -255,41 +282,15 @@ const MainSite: React.FC = () => {
                                     borderRadius: '10px',
                                 },
                             }}>
-                                {/*{chats ? chats.map((chat) => (
-                                    <ListItem key={chat} sx={{ borderBottom: 1, borderColor: '#292d3b', px: 0, py: 1 }}>
+                                {familyGroups ? familyGroups.map((chat) => (
+                                    <ListItem key={chat.id} sx={{ borderBottom: 1, borderColor: '#292d3b', px: 0, py: 1 }}>
                                         <ListItemText>
                                             <Box component="div" sx={{ py: 1 }}>
-                                                <Typography variant="body1" fontWeight="bold">{chat}</Typography>
+                                                <Typography variant="body1" fontWeight="bold">{chat.name}</Typography>
                                             </Box>
-
-                                            <Box component="div">
-                                                <Typography variant="caption">Ezt a linket elmentettem 🚀</Typography>
-                                            </Box>
-
-                                            {/* options */}{/*
-                                            <Menu
-                                                anchorEl={anchorEl}
-                                                open={openOptions}
-                                                onClose={handleCloseOptions}
-                                                slotProps={{
-                                                    paper: {
-                                                        sx: {
-                                                            bgcolor: '#1c1f2e',
-                                                            color: '#f7f7f7',
-                                                            border: '1px solid #292d3b',
-                                                        }
-                                                    }
-                                                }}
-                                            >
-                                                <MenuItem onClick={handleCloseOptions}>Rename</MenuItem>
-                                                <MenuItem onClick={handleDeleteFamilyGroup(chat)} sx={{ color: '#ff5252' }}>Delete</MenuItem>
-                                            </Menu>
                                         </ListItemText>
-                                        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ bgcolor: '#1e2232', mr: 1, '&:hover': { bgcolor: '#3b4363' } }}>
-                                            <MoreHoriz sx={{ color: '#f7f7f7' }} />
-                                        </IconButton>
                                     </ListItem>
-                                )) : 'Még nem vagy tagja egy családi csoportnak sem'}*/}
+                                )) : 'Még nem vagy tagja egy családi csoportnak sem'}
                             </List>
                         </Card>
 
@@ -306,7 +307,7 @@ const MainSite: React.FC = () => {
                             </Box>
                             <Stack spacing={2}>
                                 <Box>
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
                                         <DateCalendar
                                             value={value}
                                             //onChange={(newValue) => setValue(newValue)}

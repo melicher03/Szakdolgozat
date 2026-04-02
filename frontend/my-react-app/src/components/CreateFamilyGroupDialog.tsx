@@ -24,14 +24,13 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
     const [isCreating, setIsCreating] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-    const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000"
     const defaultOwnerId = "local-user"
 
     const handleCreateFamilyGroup = async () => {
         const trimmedName = name.trim()
 
         if (!trimmedName) {
-            setErrorMessage("A csoport neve kötelező.")
+            setErrorMessage("The family group name is required.")
             return
         }
 
@@ -39,7 +38,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
         setErrorMessage(null)
 
         try {
-            const response = await fetch(`${apiBaseUrl}/family-groups`, {
+            const response = await fetch('http://localhost:3000/family-groups', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -52,13 +51,13 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
             })
 
             if (!response.ok) {
-                throw new Error("Nem sikerult letrehozni a csoportot.")
+                throw new Error("Could not create family group. Please try again.")
             }
 
             setName("")
             onClose()
         } catch {
-            setErrorMessage("A csoport letrehozasa sikertelen. Probald ujra.")
+            setErrorMessage("Could not create family group. Please try again.")
         } finally {
             setIsCreating(false)
         }
