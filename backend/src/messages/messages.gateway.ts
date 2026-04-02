@@ -27,7 +27,6 @@ export class MessagesGateway {
   @SubscribeMessage('send-message')
   async handleSendMessage(
     @MessageBody() dto: CreateMessageDto,
-    @ConnectedSocket() client: Socket,
   ) {
     const message = await this.messagesService.create(dto);
     this.server.to(dto.familyGroupId).emit('receive-message', message);
