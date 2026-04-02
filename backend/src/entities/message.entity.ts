@@ -8,7 +8,7 @@ import {
 @Entity('messages')
 export class Message {
   @PrimaryGeneratedColumn()
-  id: string
+  id: number
 
   @Column()
   text: string

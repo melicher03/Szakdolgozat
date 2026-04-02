@@ -24,7 +24,7 @@ export class MessagesService {
   }
 
   async findById(id: string): Promise<Message | null> {
-    return this.messagesRepository.findOne({ where: { id } })
+    return this.messagesRepository.findOne({ where: { id: Number(id) } })
   }
 
   async delete(id: string): Promise<void> {
