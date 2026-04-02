@@ -1,5 +1,5 @@
-import { CalendarMonth, Chat, Folder, RssFeed, Search, Image, Logout, InsertLink, Groups, Add } from "@mui/icons-material"
-import { Avatar, Box, Button, Card, Chip, Container, Divider, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, TextField, Typography } from "@mui/material"
+import { CalendarMonth, Folder, RssFeed, Search, Image, Logout, InsertLink, Groups, Add } from "@mui/icons-material"
+import { Avatar, Box, Button, Card, Chip, Container, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, TextField, Typography } from "@mui/material"
 import { useEffect, useState } from "react";
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -7,9 +7,9 @@ import "dayjs/locale/en-gb";
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-//import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
 import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
 import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
+import Chat from "./Chat";
 
 type FamilyGroup = {
     id: number;
@@ -41,7 +41,6 @@ const MainSite: React.FC = () => {
 
     const pages = [
         { text: 'Feed', icon: <RssFeed />, active: true },
-        { text: 'Chat', icon: <Chat /> },
         { text: 'Media', icon: <Image /> },
         { text: 'Calendar', icon: <CalendarMonth /> },
         { text: 'Links', icon: <InsertLink /> },
@@ -186,68 +185,12 @@ const MainSite: React.FC = () => {
                     {/* Middle */}
                     <Grid size={{ xs: 12, md: 6.5 }}>
                         <Card sx={cardStyle}>
-                            <TextField
-                                fullWidth
-                                placeholder="Mi újság a családban?"
-                                variant="standard"
-                                slotProps={{
-                                    input: {
-                                        disableUnderline: true,
-                                    },
-                                }}
-                                sx={{
-                                    mb: 2,
-                                    "& .MuiInputBase-input": {
-                                        color: "#f7f7f7",
-                                    },
-                                }}
+                            <Chat 
+                                familyGroupId="3"
+                                familyGroupName="bagaméri"
+                                userId="1"
+                                userName="local-userrr"
                             />
-                            <Stack direction="row" justifyContent="space-between">
-                                <Stack direction="row">
-                                    <Button
-                                        startIcon={<Image />}
-                                        size="small"
-                                        sx={{ color: "#f7f7f7" }}
-                                    >
-                                        Media
-                                    </Button>
-                                    <Button
-                                        startIcon={<InsertLink />}
-                                        size="small"
-                                        sx={{ color: "#f7f7f7" }}
-                                    >
-                                        Link
-                                    </Button>
-                                </Stack>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    sx={{
-                                        borderRadius: 2,
-                                        py: 1,
-                                        '&:hover': { backgroundColor: "#305abf" },
-                                    }}
-                                >
-                                    POST
-                                </Button>
-                            </Stack>
-                        </Card>
-
-                        <Card sx={cardStyle}>
-                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                                <Avatar sx={{ width: 24, height: 24, bgcolor: '#2e7d32' }}>F</Avatar>
-                                <Typography variant="subtitle2">FamilyHub</Typography>
-                                <Chip label="System" size="small" variant="outlined" sx={{ height: 20 }} />
-                            </Stack>
-                            <Typography variant="h6" gutterBottom>MVP in progress</Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                UI váz + auth + API proxy kész ✅ Következő: Chat + Media alap flow.
-                            </Typography>
-                            <Divider sx={{ borderColor: '#222', mb: 1 }} />
-                            <Stack direction="row" spacing={2}>
-                                <Typography variant="caption" sx={{ cursor: 'pointer' }}>👍 Like</Typography>
-                                <Typography variant="caption" sx={{ cursor: 'pointer' }}>💬 Comment</Typography>
-                            </Stack>
                         </Card>
                     </Grid>
 
