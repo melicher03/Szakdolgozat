@@ -13,7 +13,7 @@ export class FamilyGroupsService {
   ) {}
 
   async create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    const normalizedName = createFamilyGroupDto.name.trim();
+    const normalizedName = createFamilyGroupDto.name.trim().toLowerCase();
     const existing = await this.familyGroupsRepository.findOne({
       where: { name: normalizedName },
     });

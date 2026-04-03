@@ -1,9 +1,61 @@
-import { Box, Button, TextField, Typography } from '@mui/material'
+import { Box, Button, TextField, Typography, Alert, CircularProgress } from '@mui/material'
 import { useState } from 'react';
+import { supabase } from '../services/supabaseClient';
 
 const LoginPage: React.FC = () => {
-    const [, setEmail] = useState("");
-    const [, setPassword] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleLogin = async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (signInError) throw signInError;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Login failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const { error: signUpError } = await supabase.auth.signUp({
+                email,
+                password,
+            });
+
+            if (signUpError) throw signUpError;
+            setError(null);
+            alert('Registration successful! Please sign in.');
+            setIsRegistering(false);
+            setEmail('');
+            setPassword('');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Registration failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isRegistering) {
+            handleRegister();
+        } else {
+            handleLogin();
+        }
+    };
 
     return (
         <Box
@@ -34,6 +86,8 @@ const LoginPage: React.FC = () => {
                     FamilyHub
                 </Typography>
                 <Box
+                    component="form"
+                    onSubmit={handleSubmit}
                     sx={{
                         minHeight: "40vh",
                         width: "40vh",
@@ -48,11 +102,25 @@ const LoginPage: React.FC = () => {
                     }}
                 >
                     <Typography variant="h6" color='#f7f7f7'>
+                        {isRegistering ? 'Register' : 'Login'}
+                    </Typography>
+
+                    {error && (
+                        <Alert severity="error" sx={{ backgroundColor: '#562b2b', color: '#f7f7f7' }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    <Typography variant="body2" color='#f7f7f7'>
                         Email
                     </Typography>
                     <TextField
+                        type="email"
                         placeholder="Enter your email"
+                        value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
+                        required
                         sx={{
                             backgroundColor: "#1f222f",
                             borderRadius: 2,
@@ -63,13 +131,16 @@ const LoginPage: React.FC = () => {
                         }}
                     />
 
-                    <Typography variant="h6" color='#f7f7f7'>
+                    <Typography variant="body2" color='#f7f7f7'>
                         Password
                     </Typography>
                     <TextField
                         placeholder="Enter your password"
                         type="password"
+                        value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        required
                         sx={{
                             backgroundColor: "#1f222f",
                             borderRadius: 2,
@@ -81,8 +152,9 @@ const LoginPage: React.FC = () => {
                     />
 
                     <Button
+                        type="submit"
                         variant="contained"
-                        //onClick={() => onLogin(email, password)}
+                        disabled={loading}
                         sx={{
                             mt: 2,
                             borderRadius: 2,
@@ -92,25 +164,29 @@ const LoginPage: React.FC = () => {
                             '&:hover': { backgroundColor: "#305abf" },
                         }}
                     >
-                        Login
+                        {loading ? <CircularProgress size={24} /> : (isRegistering ? 'Register' : 'Login')}
                     </Button>
 
                     <Button
+                        type="button"
                         variant="text"
-                        //onClick={() => onRegister(email, password)}
+                        onClick={() => {
+                            setIsRegistering(!isRegistering);
+                            setError(null);
+                        }}
+                        disabled={loading}
                         sx={{
                             color: "#f7f7f7",
                             textTransform: "none",
                             '&:hover': { backgroundColor: "#24283b" },
                         }}
                     >
-                        Register
+                        {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
                     </Button>
                 </Box>
             </Box>
         </Box>
     )
 }
-
 
 export default LoginPage

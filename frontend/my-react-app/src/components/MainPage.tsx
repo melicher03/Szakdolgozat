@@ -1,5 +1,5 @@
 import { CalendarMonth, Folder, RssFeed, Search, Image, Logout, InsertLink, Groups, Add } from "@mui/icons-material"
-import { Avatar, Box, Button, Card, Chip, Container, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, TextField, Typography } from "@mui/material"
+import { Avatar, Box, Button, Card, Chip, Container, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, Typography } from "@mui/material"
 import { useEffect, useState } from "react";
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -10,6 +10,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
 import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
 import Chat from "./Chat";
+import { supabase } from "../services/supabaseClient";
 
 type FamilyGroup = {
     id: number;
@@ -28,6 +29,12 @@ type CalendarEvent = {
 };
 
 const MainSite: React.FC = () => {
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Logout failed:', error.message);
+        }
+    };
 
     const cardStyle = {
         bgcolor: '#141620',
@@ -86,7 +93,7 @@ const MainSite: React.FC = () => {
     const handleClickOpenCreateFamilyGroup = () => setOpenCreateFamilyGroup(true);
     const handleClickOpenCreateCalendarEvent = () => setOpenCreateCalendarEvent(true);
 
-    const [value, setValue] = useState<Dayjs | null>(dayjs());
+    const [value] = useState<Dayjs | null>(dayjs());
 
     return (
         <Box
@@ -126,7 +133,7 @@ const MainSite: React.FC = () => {
                     <Button
                         variant="outlined"
                         size="small"
-                        //onClick={onLogout}
+                        onClick={handleLogout}
                         sx={{
                             color: "#f7f7f7",
                             borderColor: "#f7f7f7"
