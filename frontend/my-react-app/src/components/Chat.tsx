@@ -104,7 +104,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       }}
     >
       <Typography variant="body2" color={isConnected ? 'green' : 'red'}>
-        {isConnected ? '🟢 Connected' : '🔴 Disconnected'} to {familyGroupName}
+        {isConnected ? '🟢 Connected to' : '🔴 Disconnected from'} {familyGroupName}
       </Typography>
 
       <Box

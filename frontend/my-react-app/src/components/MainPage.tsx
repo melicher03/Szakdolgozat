@@ -188,8 +188,8 @@ const MainSite: React.FC = () => {
                             <Chat 
                                 familyGroupId="3"
                                 familyGroupName="bagaméri"
-                                userId="1"
-                                userName="local-userrr"
+                                userId="2"
+                                userName="local-user"
                             />
                         </Card>
                     </Grid>

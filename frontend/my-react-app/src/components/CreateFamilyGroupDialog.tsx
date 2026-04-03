@@ -66,14 +66,14 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={() => { onClose(); setName("") }}
             fullWidth
             maxWidth="sm"
             slotProps={{
                 paper: { sx: cardStyle },
             }}
         >
-            <DialogTitle>Create new family group</DialogTitle>
+            <DialogTitle sx={{color: '#f7f7f7'}}>Create new family group</DialogTitle>
 
             <DialogContent>
                 <TextField
@@ -97,7 +97,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={onClose} sx={{ color: "#f7f7f7" }}>
+                <Button onClick={() => { onClose(); setName("") }} sx={{ color: "#f7f7f7" }}>
                     Cancel
                 </Button>
                 <Button onClick={handleCreateFamilyGroup} variant="contained" disabled={isCreating}>

@@ -42,6 +42,22 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         submit: null,
     })
 
+    const handleClose = () => {
+        setTitle("")
+        setDescription("")
+        setFamilyGroupId("")
+        setStartAt("")
+        setEndAt("")
+        setErrors({
+            title: null,
+            familyGroupId: null,
+            startAt: null,
+            endAt: null,
+            submit: null,
+        })
+        onClose()
+    }
+
     const handleCreateCalendarEvent = async () => {
         const trimmedTitle = title.trim()
         const nextErrors: FieldErrors = {
@@ -140,14 +156,14 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             fullWidth
             maxWidth="sm"
             slotProps={{
                 paper: { sx: cardStyle },
             }}
         >
-            <DialogTitle>Create new calendar event</DialogTitle>
+            <DialogTitle sx={{color: '#f7f7f7'}}>Create new calendar event</DialogTitle>
 
             <DialogContent>
                 <TextField
@@ -207,12 +223,13 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                         setErrors((prev) => ({ ...prev, startAt: null, submit: null }))
                     }}
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{inputLabel: { shrink: true }}}
                     error={Boolean(errors.startAt)}
                     helperText={errors.startAt ?? " "}
                     sx={{
                         "& .MuiInputBase-input": { color: "#f7f7f7" },
                         "& .MuiInputLabel-root": { color: "#f7f7f7" },
+                        "& .MuiInputBase-input::-webkit-calendar-picker-indicator": { filter: "invert(100%)" },
                     }}
                 />
                 <TextField
@@ -225,12 +242,13 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                         setErrors((prev) => ({ ...prev, endAt: null, submit: null }))
                     }}
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{inputLabel: { shrink: true }}}
                     error={Boolean(errors.endAt)}
                     helperText={errors.endAt ?? " "}
                     sx={{
                         "& .MuiInputBase-input": { color: "#f7f7f7" },
                         "& .MuiInputLabel-root": { color: "#f7f7f7" },
+                        "& .MuiInputBase-input::-webkit-calendar-picker-indicator": { filter: "invert(100%)" },
                     }}
                 />
                 {errors.submit ? (
@@ -247,7 +265,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={onClose} sx={{ color: "#f7f7f7" }}>
+                <Button onClick={handleClose} sx={{ color: "#f7f7f7" }}>
                     Cancel
                 </Button>
                 <Button onClick={handleCreateCalendarEvent} variant="contained" disabled={isCreating}>
