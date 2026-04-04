@@ -19,7 +19,7 @@ export class MessagesService {
   async findByFamilyGroup(familyGroupId: string): Promise<Message[]> {
     return this.messagesRepository.find({
       where: { familyGroupId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'ASC' },
     })
   }
 

@@ -12,7 +12,7 @@ interface Message {
 }
 
 interface ChatComponentProps {
-  familyGroupId: string;
+  familyGroupId: string | null;
   familyGroupName: string;
   userId: string;
   userName: string;
@@ -40,39 +40,70 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   }, [messages]);
 
   useEffect(() => {
-    const socket = io('http://localhost:3000', {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-    });
-    setCurrentSocket(socket);
+    let socket: Socket | null = null;
+    let isActive = true;
 
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-      socket.emit('join-group', { familyGroupId });
-    });
+    const loadHistoryAndConnect = async () => {
+      if (familyGroupId === null) {
+        setMessages([]);
+        setIsConnected(false);
+        setCurrentSocket(null);
+        return;
+      }
 
-    socket.on('receive-message', (message: Message) => {
-      const normalizedMessage: Message = {
-        id: message.id,
-        text: message.text,
-        senderId: message.senderId ?? 'unknown',
-        senderName: message.senderName,
-        createdAt: message.createdAt,
-      };
-      setMessages((prev) => [...prev, normalizedMessage]);
-    });
+      try {
+        const response = await fetch(`http://localhost:3000/messages?familyGroupId=${familyGroupId}`);
+        if (response.ok) {
+          const history = (await response.json()) as Message[];
+          if (isActive) {
+            setMessages(history);
+          }
+        }
+      } catch {
+        if (isActive) {
+          setMessages([]);
+        }
+      }
 
-    socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-      setIsConnected(false);
-    });
+      if (!isActive) return;
+
+      socket = io('http://localhost:3000', {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+      });
+      setCurrentSocket(socket);
+
+      socket.on('connect', () => {
+        console.log('WebSocket connected');
+        setIsConnected(true);
+        socket?.emit('join-group', { familyGroupId });
+      });
+
+      socket.on('receive-message', (message: Message) => {
+        const normalizedMessage: Message = {
+          id: message.id,
+          text: message.text,
+          senderId: message.senderId ?? 'unknown',
+          senderName: message.senderName,
+          createdAt: message.createdAt,
+        };
+        setMessages((prev) => [...prev, normalizedMessage]);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('WebSocket disconnected');
+        setIsConnected(false);
+      });
+    };
+
+    void loadHistoryAndConnect();
 
     return () => {
-      socket.emit('leave-group', { familyGroupId });
-      socket.disconnect();
+      isActive = false;
+      socket?.emit('leave-group', { familyGroupId });
+      socket?.disconnect();
       setCurrentSocket(null);
     };
   }, [familyGroupId]);
@@ -119,7 +150,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         }}
       >
         <Stack spacing={1}>
-          {messages.length === 0 ? (
+          {familyGroupId === null ? (
+            <Typography variant="body2" color="#888" sx={{ textAlign: 'center', py: 4 }}>
+              There is no family group selected. Please select a family group to start chatting.
+            </Typography>
+          ) : (messages.length === 0 ? (
             <Typography variant="body2" color="#888" sx={{ textAlign: 'center', py: 4 }}>
               No messages yet. Start the conversation!
             </Typography>
@@ -144,7 +179,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
                 </Typography>
               </Box>
             ))
-          )}
+          ))}
         </Stack>
       </Box>
 

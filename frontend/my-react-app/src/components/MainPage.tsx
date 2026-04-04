@@ -176,8 +176,8 @@ const MainSite: React.FC = () => {
                     <Grid size={{ xs: 12, md: 6.5 }}>
                         <Card sx={cardStyle}>
                             <Chat 
-                                familyGroupId="3"
-                                familyGroupName="bagaméri"
+                                familyGroupId={selectedGroupId?.toString() ?? null}
+                                familyGroupName={familyGroups?.find((g) => g.id === selectedGroupId)?.name ?? "Select a family group"}
                                 userId="2"
                                 userName="local-user"
                             />
