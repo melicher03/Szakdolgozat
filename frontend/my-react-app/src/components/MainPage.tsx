@@ -11,6 +11,7 @@ import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
 import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
 import Chat from "./Chat";
 import { supabase } from "../services/supabaseClient";
+import GroupFilesPanel from "./GroupFilesPanel";
 
 type FamilyGroup = {
     id: number;
@@ -67,6 +68,7 @@ const MainSite: React.FC = () => {
 
     const [familyGroups, setFamilyGroups] = useState<FamilyGroup[] | null>(null)
     const [events, setEvents] = useState<CalendarEvent[] | null>(null)
+    const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -87,6 +89,17 @@ const MainSite: React.FC = () => {
         };
         fetchEvents();
     }, [openCreateCalendarEvent])
+
+    useEffect(() => {
+        if (!familyGroups || familyGroups.length === 0) {
+            setSelectedGroupId(null)
+            return
+        }
+
+        if (!selectedGroupId || !familyGroups.some((group) => group.id === selectedGroupId)) {
+            setSelectedGroupId(familyGroups[0].id)
+        }
+    }, [familyGroups, selectedGroupId])
 
     console.log(events)
 
@@ -181,12 +194,12 @@ const MainSite: React.FC = () => {
                             </List>
                         </Card>
 
-                        <Card sx={cardStyle}>
-                            <Typography variant="subtitle2" gutterBottom>Space állapot</Typography>
-                            <Chip label="MVP" size="small" color="success" sx={{ mb: 2 }} />
-                            <Typography variant="caption" display="block" color="text.secondary">Next:</Typography>
-                            <Typography variant="body2">Chat + Media</Typography>
-                        </Card>
+                        <GroupFilesPanel
+                            apiBaseUrl="http://localhost:3000"
+                            familyGroups={familyGroups ?? []}
+                            selectedGroupId={selectedGroupId}
+                            onSelectGroup={setSelectedGroupId}
+                        />
                     </Grid>
 
                     {/* Middle */}
@@ -232,15 +245,39 @@ const MainSite: React.FC = () => {
                                     borderRadius: '10px',
                                 },
                             }}>
-                                {familyGroups ? familyGroups.map((chat) => (
-                                    <ListItem key={chat.id} sx={{ borderBottom: 1, borderColor: '#292d3b', px: 0, py: 1 }}>
-                                        <ListItemText>
-                                            <Box component="div" sx={{ py: 1 }}>
-                                                <Typography variant="body1" fontWeight="bold">{chat.name}</Typography>
-                                            </Box>
-                                        </ListItemText>
-                                    </ListItem>
-                                )) : 'Még nem vagy tagja egy családi csoportnak sem'}
+                                {familyGroups ? familyGroups.map((chat) => {
+                                    const isSelected = selectedGroupId === chat.id
+                                    return (
+                                        <ListItem
+                                            key={chat.id}
+                                            disablePadding
+                                            sx={{ borderBottom: 1, borderColor: '#292d3b' }}
+                                        >
+                                            <ListItemButton
+                                                selected={isSelected}
+                                                onClick={() => setSelectedGroupId(chat.id)}
+                                                sx={{
+                                                    borderRadius: 1,
+                                                    px: 0,
+                                                    py: 1,
+                                                    '&.Mui-selected': { bgcolor: '#2a3048' },
+                                                    '&.Mui-selected:hover': { bgcolor: '#333b57' },
+                                                }}
+                                            >
+                                                <ListItemText>
+                                                    <Box component="div" sx={{ py: 1 }}>
+                                                        <Typography
+                                                            variant="body1"
+                                                            fontWeight={isSelected ? "bold" : "normal"}
+                                                        >
+                                                            {chat.name}
+                                                        </Typography>
+                                                    </Box>
+                                                </ListItemText>
+                                            </ListItemButton>
+                                        </ListItem>
+                                    )
+                                }) : 'Még nem vagy tagja egy családi csoportnak sem'}
                             </List>
                         </Card>
 
@@ -260,7 +297,6 @@ const MainSite: React.FC = () => {
                                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
                                         <DateCalendar
                                             value={value}
-                                            //onChange={(newValue) => setValue(newValue)}
                                             sx={{
                                                 width: '100%',
                                                 color: '#f7f7f7',

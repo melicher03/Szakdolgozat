@@ -21,16 +21,16 @@ export class SharedAsset {
   @Column({ type: 'enum', enum: SharedAssetType })
   type: SharedAssetType
 
-  @Column()
+  @Column({ nullable: true })
   title?: string
 
   @Column()
   url: string
 
-  @Column()
+  @Column({ nullable: true })
   storagePath?: string
 
-  @Column()
+  @Column({ nullable: true })
   fileSize?: number
 
   @Column()
