@@ -196,9 +196,7 @@ const MainSite: React.FC = () => {
 
                         <GroupFilesPanel
                             apiBaseUrl="http://localhost:3000"
-                            familyGroups={familyGroups ?? []}
                             selectedGroupId={selectedGroupId}
-                            onSelectGroup={setSelectedGroupId}
                         />
                     </Grid>
 
