@@ -16,49 +16,51 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   const [value] = useState(dayjs());
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-    >
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-        Upcoming events
-      </Typography>
-      <IconButton
-        onClick={onCreateCalendarEvent}
-        sx={{ bgcolor: '#1e2232', '&:hover': { bgcolor: '#3b4363' } }}
-      >
-        <Add sx={{ color: '#f7f7f7' }} />
-      </IconButton>
-    </Box>
+    <>
+        <Box
+        sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }}
+        >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+            Upcoming events
+        </Typography>
+        <IconButton
+            onClick={onCreateCalendarEvent}
+            sx={{ bgcolor: '#1e2232', '&:hover': { bgcolor: '#3b4363' } }}
+        >
+            <Add sx={{ color: '#f7f7f7' }} />
+        </IconButton>
+        </Box>
 
-    <Stack spacing={2}>
-      <Box>
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
-          <DateCalendar
-            value={value}
-            sx={{
-              width: '100%',
-              color: '#f7f7f7',
-              '& .MuiPickersDay-root': {
+        <Stack spacing={2}>
+        <Box>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
+            <DateCalendar
+                value={value}
+                sx={{
+                width: '100%',
                 color: '#f7f7f7',
-              },
-              '& .MuiDayCalendar-weekDayLabel': {
-                color: '#f7f7f7',
-              },
-              '& .MuiPickersArrowSwitcher-button': {
-                color: '#f7f7f7',
-              },
-              '& .MuiPickersCalendarHeader-switchViewButton': {
-                color: '#f7f7f7',
-              },
-            }}
-          />
-        </LocalizationProvider>
-      </Box>
-    </Stack>
+                '& .MuiPickersDay-root': {
+                    color: '#f7f7f7',
+                    },
+                    '& .MuiDayCalendar-weekDayLabel': {
+                        color: '#f7f7f7',
+                },
+                '& .MuiPickersArrowSwitcher-button': {
+                    color: '#f7f7f7',
+                },
+                '& .MuiPickersCalendarHeader-switchViewButton': {
+                    color: '#f7f7f7',
+                },
+                }}
+            />
+            </LocalizationProvider>
+        </Box>
+        </Stack>
+    </>
   )
 }
 
