@@ -133,7 +133,7 @@ const MainSite: React.FC = () => {
 
                     {/* Left side */}
                     <Grid size={{ xs: 12, md: 2.5 }}>
-                        <Card sx={cardStyle}>
+                        {/* <Card sx={cardStyle}>
                             <Box sx={{ display: 'flex' }}>
                                 <Avatar sx={{ mr: 1, bgcolor: '#333' }}>Y</Avatar>
                                 <Box>
@@ -164,7 +164,7 @@ const MainSite: React.FC = () => {
                                     </ListItem>
                                 ))}
                             </List>
-                        </Card>
+                        </Card> */}
 
                         <GroupFilesPanel
                             apiBaseUrl="http://localhost:3000"
