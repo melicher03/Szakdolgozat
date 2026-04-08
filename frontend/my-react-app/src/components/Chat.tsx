@@ -1,7 +1,19 @@
-import { Send } from '@mui/icons-material';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { AttachFile, InsertLink, Send } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { supabase } from '../services/supabaseClient';
+import { cardStyle } from './MainPage';
 
 interface Message {
   id?: string;
@@ -28,6 +40,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkTitle, setLinkTitle] = useState('');
+  const [selectedFile, setselectedFile] = useState<File | null>(null);
+  const [fileTitle, setFileTitle] = useState('');
+  const [result, setResult] = useState<string | null>(null);
+  const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? 'media';
 
   const scrollToBottom = () => {
     const container = document.getElementById('chat-scroll-container');
@@ -121,6 +141,101 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     currentSocket.emit('send-message', message);
     setInput('');
     requestAnimationFrame(() => scrollToBottom());
+  };  
+  const closeLinkDialog = () => {
+    setIsLinkDialogOpen(false);
+    setLinkUrl('');
+    setLinkTitle('');
+  };
+
+  const closeFileDialog = () => {
+    setIsFileDialogOpen(false);
+    setselectedFile(null);
+    setFileTitle('');
+  };
+
+  const handleSaveLink = async () => {
+    if (!familyGroupId || !linkUrl.trim()) {
+      setResult('Provide a valid URL and select a family group first.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          familyGroupId: Number(familyGroupId),
+          url: linkUrl.trim(),
+          title: linkTitle.trim() || undefined,
+          uploadedBy: userName,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        setResult(`Link upload failed: ${text}`);
+        return;
+      }
+
+      setResult('Link uploaded successfully.');
+      closeLinkDialog();
+    } catch (error) {
+      setResult(`Link upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!familyGroupId || !selectedFile) {
+      setResult('Select a family group and an image/video file first.');
+      return;
+    }
+
+    try {
+      const fileExtension = selectedFile.name.split('.').pop() || 'bin';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+      const storagePath = `family-${familyGroupId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(storageBucket)
+        .upload(storagePath, selectedFile, {
+          contentType: selectedFile.type || undefined,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        setResult(`Media upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath);
+
+      const response = await fetch('http://localhost:3000/assets/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          familyGroupId: Number(familyGroupId),
+          title: fileTitle.trim() || selectedFile.name,
+          url: data.publicUrl,
+          storagePath,
+          fileSize: selectedFile.size,
+          uploadedBy: userName,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        setResult(`Media metadata save failed: ${text}`);
+        return;
+      }
+
+      setResult('Media uploaded successfully.');
+      closeFileDialog();
+    } catch (error) {
+      setResult(
+        `Media upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   };
 
   return (
@@ -182,6 +297,148 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           ))}
         </Stack>
       </Box>
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <Button
+          sx={{
+            borderRadius: 5,
+            mr: 1,
+            minWidth: 0,
+            width: 30,
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          variant="contained"
+          onClick={() => setIsLinkDialogOpen(true)}
+          disabled={!isConnected}
+        >
+          <InsertLink fontSize='small' />
+        </Button>
+        <Button
+          sx={{
+            borderRadius: 5,
+            mr: 1,
+            minWidth: 0,
+            width: 30,
+            height: 30,
+            px: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          variant="contained"
+          onClick={() => setIsFileDialogOpen(true)}
+          disabled={!isConnected}
+        >
+          <AttachFile fontSize="small" />
+        </Button>
+      </Box>
+
+        <Dialog
+          open={isLinkDialogOpen}
+          onClose={closeLinkDialog}
+          fullWidth
+          maxWidth="sm"
+          slotProps={{
+                paper: { sx: cardStyle },
+            }}
+        >
+          <DialogTitle sx={{ color: '#f7f7f7' }}>Save a link</DialogTitle>
+          <DialogContent sx={{ display: 'grid', gap: 2, pt: 1, bgcolor: 'transparent' }}>
+            <TextField
+              autoFocus
+              placeholder="URL"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              fullWidth
+              sx={{
+                '& .MuiInputBase-input': { color: '#f7f7f7' },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#292d3b' },
+                },
+              }}
+            />
+            <TextField
+              placeholder="Title (optional)"
+              value={linkTitle}
+              onChange={(e) => setLinkTitle(e.target.value)}
+              fullWidth
+              sx={{
+                '& .MuiInputBase-input': { color: '#f7f7f7' },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#292d3b' },
+                },
+              }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button sx={{ color: "#f7f7f7" }} onClick={closeLinkDialog}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleSaveLink} disabled={!linkUrl.trim()}>
+              Save link
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+      <Dialog
+        open={isFileDialogOpen}
+        onClose={closeFileDialog}
+        fullWidth
+        maxWidth="sm"
+        slotProps={{
+                paper: { sx: cardStyle },
+            }}
+      >
+        <DialogTitle sx={{ color: '#f7f7f7' }}>Upload image or video</DialogTitle>
+        <DialogContent sx={{ display: 'grid', gap: 2, pt: 1, bgcolor: 'transparent' }}>
+          <Button variant="outlined" component="label">
+            Choose image/video
+            <input
+              hidden
+              type="file"
+              accept="image/*,video/*"
+              onChange={(e) => setselectedFile(e.target.files?.[0] ?? null)}
+            />
+          </Button>
+          {selectedFile && (
+            <Typography variant="caption">Selected: {selectedFile.name}</Typography>
+          )}
+          <TextField
+            placeholder="Title (optional)"
+            value={fileTitle}
+            onChange={(e) => setFileTitle(e.target.value)}
+            fullWidth
+            sx={{
+              '& .MuiInputBase-input': { color: '#f7f7f7' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#292d3b' },
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button sx={{ color: "#f7f7f7" }} onClick={closeFileDialog}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleUploadFile} disabled={!selectedFile}>
+            Upload media
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {result && (
+        <Typography variant="caption" sx={{ color: '#9fa6c2' }}>
+          {result}
+        </Typography>
+      )}
 
       <Stack direction="row" spacing={1}>
         <TextField

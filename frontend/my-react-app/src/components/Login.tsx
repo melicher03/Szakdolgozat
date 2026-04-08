@@ -60,7 +60,7 @@ const LoginPage: React.FC = () => {
     return (
         <Box
             sx={{
-                height: "100vh",
+                minHeight: "100vh",
                 backgroundColor: '#1e2232',
                 justifyContent: "center",
                 alignItems: "center",
@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
         >
             <Box
                 sx={{
-                    height: "60vh",
+                    minHeight: "60vh",
                     width: "50vh",
                     backgroundColor: '#1a1d29',
                     borderRadius: 5,

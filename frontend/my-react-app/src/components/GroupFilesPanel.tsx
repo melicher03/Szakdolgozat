@@ -1,18 +1,13 @@
-import { CloudUpload, InsertLink } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Card,
-  Divider,
   List,
   ListItem,
   ListItemText,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "../services/supabaseClient";
 
 type SharedAsset = {
   id: string;
@@ -44,13 +39,8 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
   apiBaseUrl,
   selectedGroupId,
 }) => {
-  const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? "media";
   const [assets, setAssets] = useState<SharedAsset[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [linkTitle, setLinkTitle] = useState("");
+  const [_, setError] = useState<string | null>(null);
 
   const fetchAssets = useCallback(async () => {
     if (!selectedGroupId) {
@@ -79,141 +69,12 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
   const fileAssets = useMemo(() => assets.filter((a) => a.type === "FILE"), [assets]);
   const urlAssets = useMemo(() => assets.filter((a) => a.type === "URL"), [assets]);
 
-  const handleUploadFile = useCallback(async () => {
-    if (!selectedGroupId || !selectedFile) {
-      setActionMessage("Select a group and file first.");
-      return;
-    }
-
-    try {
-      // Generate storage path
-      const fileExtension = selectedFile.name.split('.').pop() || 'bin';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-      const storagePath = `family-${selectedGroupId}/${fileName}`;
-
-      // Upload to Supabase Storage (frontend direct)
-      const { error: uploadError } = await supabase.storage
-        .from(storageBucket)
-        .upload(storagePath, selectedFile, {
-          contentType: selectedFile.type || undefined,
-        });
-
-      if (uploadError) {
-        setActionMessage(`Upload failed: ${uploadError.message}`);
-        return;
-      }
-
-      // Get public URL
-      const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath);
-      const publicUrl = data.publicUrl;
-
-      // Save metadata to backend
-      const response = await fetch(`${apiBaseUrl}/assets/file`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          familyGroupId: selectedGroupId,
-          title: selectedFile.name,
-          url: publicUrl,
-          storagePath: storagePath,
-          fileSize: selectedFile.size,
-          uploadedBy: "You",
-        }),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        setActionMessage(`Metadata save failed: ${text}`);
-        return;
-      }
-
-      setSelectedFile(null);
-      setActionMessage("File uploaded successfully.");
-      void fetchAssets();
-    } catch (err) {
-      setActionMessage(`Upload error: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  }, [apiBaseUrl, fetchAssets, selectedFile, selectedGroupId, storageBucket]);
-
-  const handleSaveUrl = useCallback(async () => {
-    if (!selectedGroupId || !linkUrl.trim()) {
-      setActionMessage("Select a group and provide a URL.");
-      return;
-    }
-
-    const response = await fetch(`${apiBaseUrl}/links`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        familyGroupId: selectedGroupId,
-        url: linkUrl.trim(),
-        title: linkTitle.trim() || undefined,
-        uploadedBy: "You",
-      }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      setActionMessage(`URL save failed: ${text}`);
-      return;
-    }
-
-    setLinkUrl("");
-    setLinkTitle("");
-    setActionMessage("URL saved successfully.");
-    void fetchAssets();
-  }, [apiBaseUrl, fetchAssets, linkTitle, linkUrl, selectedGroupId]);
-
   return (
     <Card sx={panelStyle}>
       <Stack spacing={2}>
         <Typography variant="h6" fontWeight="bold">
           Group Files & Links
         </Typography>
-
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" component="label" startIcon={<CloudUpload />}>
-            Pick File
-            <input
-              hidden
-              type="file"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-            />
-          </Button>
-          <Button variant="contained" onClick={handleUploadFile} disabled={!selectedFile}>
-            Upload
-          </Button>
-        </Stack>
-
-        {selectedFile && (
-          <Typography variant="caption">Selected: {selectedFile.name}</Typography>
-        )}
-
-        <Stack direction="row" spacing={1}>
-          <TextField
-            size="small"
-            label="URL"
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-            fullWidth
-          />
-          <Button variant="contained" startIcon={<InsertLink />} onClick={handleSaveUrl}>
-            Save
-          </Button>
-        </Stack>
-
-        <TextField
-          size="small"
-          label="URL title (optional)"
-          value={linkTitle}
-          onChange={(e) => setLinkTitle(e.target.value)}
-          fullWidth
-        />
-
-        {actionMessage && <Typography variant="caption">{actionMessage}</Typography>}
-        {error && <Typography variant="caption" color="error">{error}</Typography>}
-
-        <Divider sx={{ borderColor: "#292d3b" }} />
 
         <Typography variant="subtitle2">Stored Files ({fileAssets.length})</Typography>
         <List dense sx={{ maxHeight: 180, overflow: "auto" }}>

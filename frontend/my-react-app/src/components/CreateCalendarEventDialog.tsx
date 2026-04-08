@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -6,13 +6,21 @@ import {
     DialogActions,
     TextField,
     Button,
+    MenuItem,
     type SxProps,
 } from "@mui/material";
+
+type FamilyGroups = {
+    id: number;
+    name: string;
+}
 
 interface CreateCalendarEventDialogProps {
     open: boolean;
     onClose: () => void;
     cardStyle?: SxProps;
+    familyGroups: FamilyGroups[] | null;
+    selectedGroupId: number | null;
 }
 
 type FieldErrors = {
@@ -27,6 +35,8 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
     open,
     onClose,
     cardStyle,
+    familyGroups,
+    selectedGroupId,
 }) => {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
@@ -41,6 +51,19 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         endAt: null,
         submit: null,
     })
+
+    useEffect(() => {
+        if (!open) return
+
+        if (selectedGroupId) {
+            setFamilyGroupId(String(selectedGroupId))
+            return
+        }
+
+        if (familyGroups && familyGroups.length > 0) {
+            setFamilyGroupId(String(familyGroups[0].id))
+        }
+    }, [open, selectedGroupId, familyGroups])
 
     const handleClose = () => {
         setTitle("")
@@ -75,7 +98,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         }
         
         if (!familyGroupId.trim()) {
-            nextErrors.familyGroupId = "The family group ID is required."
+            nextErrors.familyGroupId = "Select a family group."
             hasError = true
         }
 
@@ -198,7 +221,8 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                     }}
                 />
                 <TextField
-                    placeholder="Family Group ID"
+                    select
+                    label="Family group"
                     variant="standard"
                     value={familyGroupId}
                     onChange={(e) => {
@@ -210,9 +234,16 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                     helperText={errors.familyGroupId ?? " "}
                     sx={{
                         "& .MuiInputBase-input": { color: "#f7f7f7" },
-                        "& .MuiInputBase-input::placeholder": { color: "#f7f7f7", opacity: 1 },
+                        "& .MuiInputLabel-root": { color: "#f7f7f7" },
+                        "& .MuiSvgIcon-root": { color: "#f7f7f7" },
                     }}
-                />
+                >
+                    {(familyGroups ?? []).map((group) => (
+                        <MenuItem key={group.id} value={String(group.id)}>
+                            {group.name}
+                        </MenuItem>
+                    ))}
+                </TextField>
                 <TextField
                     label="Start"
                     type="datetime-local"

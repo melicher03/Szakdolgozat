@@ -1,5 +1,5 @@
-import { CalendarMonth, Folder, RssFeed, Image, Logout, InsertLink } from "@mui/icons-material"
-import { Avatar, Box, Button, Card, Container, Grid, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material"
+import { Logout } from "@mui/icons-material"
+import { Box, Button, Card, Container, Grid, Typography } from "@mui/material"
 import { useEffect, useState } from "react";
 import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
 import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
@@ -16,15 +16,7 @@ type FamilyGroup = {
     ownerId: string;
 };
 
-const MainSite: React.FC = () => {
-    const handleLogout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            console.error('Logout failed:', error.message);
-        }
-    };
-
-    const cardStyle = {
+export const cardStyle = {
         bgcolor: '#141620',
         borderRadius: 3,
         border: 1,
@@ -34,13 +26,13 @@ const MainSite: React.FC = () => {
         color: "#f7f7f7",
     };
 
-    const pages = [
-        { text: 'Feed', icon: <RssFeed />, active: true },
-        { text: 'Media', icon: <Image /> },
-        { text: 'Calendar', icon: <CalendarMonth /> },
-        { text: 'Links', icon: <InsertLink /> },
-        { text: 'Files', icon: <Folder /> },
-    ]
+const MainSite: React.FC = () => {
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Logout failed:', error.message);
+        }
+    }
 
     const [openCreateFamilyGroup, setOpenCreateFamilyGroup] = useState(false);
     const [openCreateCalendarEvent, setOpenCreateCalendarEvent] = useState(false);
@@ -102,6 +94,8 @@ const MainSite: React.FC = () => {
                     open={openCreateCalendarEvent}
                     onClose={handleCloseCreateCalendarEvent}
                     cardStyle={cardStyle}
+                    familyGroups={familyGroups}
+                    selectedGroupId={selectedGroupId}
                 />
 
                 <Box
@@ -133,39 +127,6 @@ const MainSite: React.FC = () => {
 
                     {/* Left side */}
                     <Grid size={{ xs: 12, md: 2.5 }}>
-                        {/* <Card sx={cardStyle}>
-                            <Box sx={{ display: 'flex' }}>
-                                <Avatar sx={{ mr: 1, bgcolor: '#333' }}>Y</Avatar>
-                                <Box>
-                                    <Typography variant="body2" fontWeight="bold">You</Typography>
-                                    <Typography variant="caption">@you</Typography>
-                                </Box>
-                            </Box>
-                            <List>
-                                {pages.map((page) => (
-                                    <ListItem
-                                        disablePadding
-                                        key={page.text}
-                                        sx={{
-                                            '&:hover': { backgroundColor: "#24283b" }
-                                        }}
-                                    >
-                                        <ListItemButton selected={page.active} sx={{ borderRadius: 2, mb: 0.5 }}>
-                                            <ListItemIcon
-                                                sx={{
-                                                    color: page.active ? '#1976d2' : '#f7f7f7',
-                                                    minWidth: 40
-                                                }}
-                                            >
-                                                {page.icon}
-                                            </ListItemIcon>
-                                            <ListItemText>{page.text}</ListItemText>
-                                        </ListItemButton>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Card> */}
-
                         <GroupFilesPanel
                             apiBaseUrl="http://localhost:3000"
                             selectedGroupId={selectedGroupId}
