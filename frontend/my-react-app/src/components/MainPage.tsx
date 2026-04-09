@@ -7,7 +7,6 @@ import Chat from "./Chat";
 import { supabase } from "../services/supabaseClient";
 import GroupFilesPanel from "./GroupFilesPanel";
 import FamilyGroupsPanel from "./FamilyGroupsPanel.tsx";
-import CalendarEventPanel from "./CalendarEventPanel.tsx";
 
 type FamilyGroup = {
     id: number;
@@ -22,7 +21,6 @@ export const cardStyle = {
         border: 1,
         borderColor: '#292d3b',
         p: 2,
-        mb: 2,
         color: "#f7f7f7",
     };
 
@@ -76,7 +74,8 @@ const MainSite: React.FC = () => {
         <Box
             sx={{
                 bgcolor: '#1e2232',
-                minHeight: '100vh',
+                minHeight: '100dvh',
+                boxSizing: 'border-box',
                 color: '#f7f7f7',
                 py: 3
             }}
@@ -130,6 +129,7 @@ const MainSite: React.FC = () => {
                         <GroupFilesPanel
                             apiBaseUrl="http://localhost:3000"
                             selectedGroupId={selectedGroupId}
+                            onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
                         />
                     </Grid>
 
@@ -153,12 +153,6 @@ const MainSite: React.FC = () => {
                                 selectedGroupId={selectedGroupId}
                                 onSelectGroup={setSelectedGroupId}
                                 onCreateFamilyGroup={handleClickOpenCreateFamilyGroup}
-                            />
-                        </Card>
-
-                        <Card sx={cardStyle}>
-                            <CalendarEventPanel
-                                onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
                             />
                         </Card>
                     </Grid>
