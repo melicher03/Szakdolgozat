@@ -59,7 +59,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
             }
 
             const data = (await response.json()) as Array<{ id: string; email: string }>
-            const ownerId = currentUser.id.trim().toLowerCase()
+            const ownerId = (currentUser.email ?? currentUser.id).trim().toLowerCase()
             const users = Array.from(
                 new Set(
                     data
@@ -89,7 +89,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
             return
         }
 
-        const ownerId = currentUser.id.trim().toLowerCase()
+        const ownerId = (currentUser.email ?? currentUser.id).trim().toLowerCase()
 
         if (!ownerId) {
             setErrorMessage("You need to be logged in to create a family group.")

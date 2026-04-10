@@ -1,6 +1,6 @@
 import { Logout } from "@mui/icons-material"
 import { Box, Button, Card, Container, Grid, Typography } from "@mui/material"
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
 import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
@@ -51,7 +51,13 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
     const [familyGroups, setFamilyGroups] = useState<FamilyGroup[] | null>(null)
     const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
 
-    const currentUserId = currentUser.id.trim().toLowerCase()
+    const fetchGroups = useCallback(async () => {
+        const response = await fetch("http://localhost:3000/family-groups");
+        const data = await response.json();
+        setFamilyGroups(data);
+    }, [])
+
+    const currentUserId = (currentUser.email ?? currentUser.id).trim().toLowerCase()
 
     const visibleFamilyGroups = familyGroups?.filter((group) => {
         const trimmedMembers = group.members.map((member) => member.trim().toLowerCase())
@@ -59,16 +65,10 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
     }) ?? null
 
     useEffect(() => {
-        const fetchGroups = async () => {
-            const response = await fetch("http://localhost:3000/family-groups");
-
-            const data = await response.json();
-            setFamilyGroups(data);
-        };
         if (currentUser) {
-            fetchGroups();
+            void fetchGroups();
         }
-    }, [currentUser, openCreateFamilyGroup])
+    }, [currentUser, fetchGroups, openCreateFamilyGroup])
 
     useEffect(() => {
         if (!visibleFamilyGroups || visibleFamilyGroups.length === 0) {
@@ -154,7 +154,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                             <Chat 
                                 familyGroupId={selectedGroupId?.toString() ?? null}
                                 familyGroupName={visibleFamilyGroups?.find((g) => g.id === selectedGroupId)?.name ?? "Select a family group"}
-                                userId={currentUser.id.trim().toLowerCase()}
+                                userId={ (currentUser.email ?? currentUser.id).trim().toLowerCase() }
                                 userName={currentUser.email ?? currentUser.id}
                             />
                         </Card>
@@ -168,6 +168,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                                 selectedGroupId={selectedGroupId}
                                 onSelectGroup={setSelectedGroupId}
                                 onCreateFamilyGroup={handleClickOpenCreateFamilyGroup}
+                                onGroupsChanged={() => void fetchGroups()}
                             />
                         </Card>
                     </Grid>
