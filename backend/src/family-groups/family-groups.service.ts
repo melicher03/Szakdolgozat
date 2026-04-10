@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common'
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { FamilyGroup } from '../entities/family-group.entity'
@@ -12,10 +12,34 @@ export class FamilyGroupsService {
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
   ) {}
 
+  private members(members: string[], ownerId: string): string[] {
+    const owner = ownerId.trim().toLowerCase()
+    if (!owner) {
+      throw new BadRequestException('ownerId is required')
+    }
+
+    const trimedMembers = members
+      .map((member) => member.trim().toLowerCase())
+
+    const setOfMembers = Array.from(new Set(trimedMembers))
+
+    if (!setOfMembers.includes(owner)) {
+      setOfMembers.push(owner)
+    }
+
+    return setOfMembers
+  }
+
   async create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    const normalizedName = createFamilyGroupDto.name.trim().toLowerCase();
+    const trimedName = createFamilyGroupDto.name.trim().toLowerCase();
+    const trimedOwnerId = createFamilyGroupDto.ownerId.trim().toLowerCase();
+    const trimedMembers = this.members(
+      createFamilyGroupDto.members,
+      trimedOwnerId,
+    );
+
     const existing = await this.familyGroupsRepository.findOne({
-      where: { name: normalizedName },
+      where: { name: trimedName },
     });
 
     if (existing) {
@@ -24,7 +48,9 @@ export class FamilyGroupsService {
 
     const familyGroup = this.familyGroupsRepository.create({
       ...createFamilyGroupDto,
-      name: normalizedName,
+      name: trimedName,
+      ownerId: trimedOwnerId,
+      members: trimedMembers,
     })
     return this.familyGroupsRepository.save(familyGroup)
   }
@@ -45,16 +71,22 @@ export class FamilyGroupsService {
     const familyGroup = await this.findOne(id)
 
     if (typeof updateFamilyGroupDto.name === 'string') {
-      const normalizedName = updateFamilyGroupDto.name.trim();
+      const trimedName = updateFamilyGroupDto.name.trim().toLowerCase();
       const existing = await this.familyGroupsRepository.findOne({
-        where: { name: normalizedName },
+        where: { name: trimedName },
       });
 
       if (existing && existing.id !== familyGroup.id) {
         throw new ConflictException('Family group name already exists');
       }
 
-      updateFamilyGroupDto.name = normalizedName;
+      updateFamilyGroupDto.name = trimedName;
+    }
+
+    if (Array.isArray(updateFamilyGroupDto.members)) {
+      const newMembers = updateFamilyGroupDto.members
+
+      updateFamilyGroupDto.members = this.members(newMembers, familyGroup.ownerId)
     }
 
     Object.assign(familyGroup, updateFamilyGroupDto)

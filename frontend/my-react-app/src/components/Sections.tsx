@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Card,
+  Chip,
   List,
   ListItem,
   ListItemButton,
@@ -12,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { io, Socket } from "socket.io-client";
 import CalendarEventPanel from "./CalendarEventPanel";
 
 type SharedAsset = {
@@ -20,12 +22,19 @@ type SharedAsset = {
   title?: string;
   url: string;
   fileSize?: number;
+  categoryName?: string | null;
   familyGroupId: number;
   uploadedBy: string;
   createdAt: string;
 };
 
-type GroupFilesPanelProps = {
+type AssetCategory = {
+  id: number;
+  familyGroupId: number;
+  name: string;
+};
+
+type SectionProps = {
   apiBaseUrl: string;
   selectedGroupId: number | null;
   onCreateCalendarEvent: () => void;
@@ -38,59 +47,14 @@ const panelStyle = {
   borderColor: "#292d3b",
   p: 2,
   color: "#f7f7f7",
-  height: "100%",
+  maxHeight: "70vh",
+  overflowY: "auto",
 };
 
 const CALENDAR_SECTION = "__calendar__";
 const NO_CATEGORY = "";
 
-const getCategoriesStorageKey = (groupId: number) => `asset-categories-${groupId}`;
-const getAssetCategoryMapStorageKey = (groupId: number) => `asset-category-map-${groupId}`;
-
-const getStoredCategories = (groupId: number): string[] => {
-  try {
-    const raw = localStorage.getItem(getCategoriesStorageKey(groupId));
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-
-    return Array.from(
-      new Set(
-        parsed
-          .filter((value): value is string => typeof value === "string")
-          .map((value) => value.trim())
-          .filter((value) => value.length > 0),
-      ),
-    );
-  } catch {
-    return [];
-  }
-};
-
-const setStoredCategories = (groupId: number, categories: string[]) => {
-  localStorage.setItem(getCategoriesStorageKey(groupId), JSON.stringify(categories));
-};
-
-const getStoredAssetCategoryMap = (groupId: number): Record<string, string> => {
-  try {
-    const raw = localStorage.getItem(getAssetCategoryMapStorageKey(groupId));
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-
-    return parsed as Record<string, string>;
-  } catch {
-    return {};
-  }
-};
-
-const setStoredAssetCategoryMap = (groupId: number, value: Record<string, string>) => {
-  localStorage.setItem(getAssetCategoryMapStorageKey(groupId), JSON.stringify(value));
-};
-
-const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
+const Sections: React.FC<SectionProps> = ({
   apiBaseUrl,
   selectedGroupId,
   onCreateCalendarEvent,
@@ -99,7 +63,6 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>(CALENDAR_SECTION);
-  const [assetCategoryMap, setAssetCategoryMap] = useState<Record<string, string>>({});
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const fetchAssets = useCallback(async () => {
@@ -122,63 +85,149 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
     }
   }, [apiBaseUrl, selectedGroupId]);
 
+  const fetchCategories = useCallback(async () => {
+    if (!selectedGroupId) {
+      setCategories([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/assets/categories?familyGroupId=${selectedGroupId}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load categories");
+      }
+
+      const data = (await response.json()) as AssetCategory[];
+      setCategories(data.map((category) => category.name));
+    } catch {
+      setCategories([]);
+    }
+  }, [apiBaseUrl, selectedGroupId]);
+
   useEffect(() => {
     void fetchAssets();
-  }, [fetchAssets]);
+    void fetchCategories();
+  }, [fetchAssets, fetchCategories]);
+
+  useEffect(() => {
+    let socket: Socket | null = null;
+
+    if (!selectedGroupId) {
+      return;
+    }
+
+    socket = io("http://localhost:3000", {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+    });
+
+    socket.on("connect", () => {
+      socket?.emit("join-group", { familyGroupId: String(selectedGroupId) });
+    });
+
+    socket.on("category-created", () => {
+      void fetchCategories();
+    });
+
+    socket.on("asset-category-updated", () => {
+      void fetchAssets();
+      void fetchCategories();
+    });
+
+    return () => {
+      socket?.emit("leave-group", { familyGroupId: String(selectedGroupId) });
+      socket?.disconnect();
+    };
+  }, [fetchAssets, fetchCategories, selectedGroupId]);
 
   useEffect(() => {
     if (!selectedGroupId) {
       setCategories([]);
       setSelectedSection(CALENDAR_SECTION);
-      setAssetCategoryMap({});
       return;
     }
-
-    const nextCategories = getStoredCategories(selectedGroupId);
-    const nextAssetMap = getStoredAssetCategoryMap(selectedGroupId);
-
-    setCategories(nextCategories);
-    setAssetCategoryMap(nextAssetMap);
-    setSelectedSection((prev) => {
-      if (prev === CALENDAR_SECTION) return prev;
-      return nextCategories.includes(prev) ? prev : CALENDAR_SECTION;
-    });
   }, [selectedGroupId]);
 
-  const addCategory = () => {
+  useEffect(() => {
+    if (selectedSection === CALENDAR_SECTION) return;
+
+    if (!categories.includes(selectedSection)) {
+      setSelectedSection(CALENDAR_SECTION);
+    }
+  }, [categories, selectedSection]);
+
+  const addCategory = async () => {
     if (!selectedGroupId) return;
 
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
-    if (categories.includes(trimmed)) {
-      setNewCategoryName("");
-      return;
-    }
+    try {
+      const response = await fetch(`${apiBaseUrl}/assets/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          familyGroupId: selectedGroupId,
+          name: trimmed,
+        }),
+      });
 
-    const next = [...categories, trimmed];
-    setCategories(next);
-    setStoredCategories(selectedGroupId, next);
-    setSelectedSection(trimmed);
-    setNewCategoryName("");
+      if (!response.ok) {
+        throw new Error("Failed to create category");
+      }
+
+      const createdCategory = (await response.json()) as AssetCategory;
+      setCategories((prev) => {
+        if (prev.includes(createdCategory.name)) return prev;
+        return [...prev, createdCategory.name].sort((left, right) => left.localeCompare(right));
+      });
+      setSelectedSection(createdCategory.name);
+      setNewCategoryName("");
+      void fetchCategories();
+    } catch {
+      setError("Failed to create category.");
+    }
   };
 
-  const setAssetCategory = (assetId: string, category: string) => {
+  const setAssetCategory = async (assetId: string, category: string) => {
     if (!selectedGroupId) return;
 
-    const nextMap = {
-      ...assetCategoryMap,
-      [assetId]: category,
-    };
+    try {
+      const response = await fetch(`${apiBaseUrl}/assets/${assetId}/category`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          categoryName: category === NO_CATEGORY ? null : category,
+        }),
+      });
 
-    setAssetCategoryMap(nextMap);
-    setStoredAssetCategoryMap(selectedGroupId, nextMap);
+      if (!response.ok) {
+        throw new Error("Failed to update asset category");
+      }
+
+      const updatedAsset = (await response.json()) as SharedAsset;
+      setAssets((prev) =>
+        prev.map((asset) => (asset.id === updatedAsset.id ? updatedAsset : asset)),
+      );
+      void fetchCategories();
+    } catch {
+      setError("Failed to update asset category.");
+    }
   };
 
   const filteredAssets = useMemo(() => {
     if (selectedSection === CALENDAR_SECTION) return [];
-    return assets.filter((asset) => (assetCategoryMap[asset.id] ?? NO_CATEGORY) === selectedSection);
-  }, [assetCategoryMap, assets, selectedSection]);
+    return assets.filter((asset) => (asset.categoryName ?? NO_CATEGORY) === selectedSection);
+  }, [assets, selectedSection]);
 
   const fileAssets = useMemo(
     () => filteredAssets.filter((asset) => asset.type === "FILE"),
@@ -265,14 +314,14 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
                     primary={asset.title || asset.url}
                     secondary={asset.url}
                     slotProps={{
-                      primary: { sx: { color: "#f7f7f7", fontSize: 13 } },
-                      secondary: { sx: { color: "#9fa6c2", fontSize: 12 } },
+                      primary: { sx: { color: "#f7f7f7", fontSize: 13, wordBreak: "break-word" } },
+                      secondary: { sx: { color: "#9fa6c2", fontSize: 12, wordBreak: "break-word" } },
                     }}
                   />
                   <TextField
                     select
                     size="small"
-                    value={assetCategoryMap[asset.id] ?? NO_CATEGORY}
+                    value={asset.categoryName ?? NO_CATEGORY}
                     onChange={(e) => setAssetCategory(asset.id, e.target.value)}
                     sx={{
                       mt: 1,
@@ -306,14 +355,14 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
                     primary={asset.title || asset.url}
                     secondary={asset.url}
                     slotProps={{
-                      primary: { sx: { color: "#f7f7f7", fontSize: 13 } },
-                      secondary: { sx: { color: "#9fa6c2", fontSize: 12 } },
+                      primary: { sx: { color: "#f7f7f7", fontSize: 13, wordBreak: "break-word" } },
+                      secondary: { sx: { color: "#9fa6c2", fontSize: 12, wordBreak: "break-word" } },
                     }}
                   />
                   <TextField
                     select
                     size="small"
-                    value={assetCategoryMap[asset.id] ?? NO_CATEGORY}
+                    value={asset.categoryName ?? NO_CATEGORY}
                     onChange={(e) => setAssetCategory(asset.id, e.target.value)}
                     sx={{
                       mt: 1,
@@ -342,6 +391,18 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
               </Typography>
             )}
 
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {categories.map((category) => (
+                <Chip
+                  key={category}
+                  label={category}
+                  size="small"
+                  onClick={() => setSelectedSection(category)}
+                  variant={selectedSection === category ? "filled" : "outlined"}
+                />
+              ))}
+            </Box>
+
             {assets.length > 0 && filteredAssets.length === 0 && (
               <Typography variant="caption" color="text.secondary">
                 No files or links are assigned to this category yet.
@@ -362,4 +423,4 @@ const GroupFilesPanel: React.FC<GroupFilesPanelProps> = ({
   );
 };
 
-export default GroupFilesPanel;
+export default Sections;

@@ -9,6 +9,7 @@ import { TasksModule } from './tasks/tasks.module'
 import { MessagesModule } from './messages/messages.module'
 import { AssetsModule } from './assets/assets.module'
 import { LinksModule } from './links/links.module'
+import { UsersModule } from './users/users.module'
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { LinksModule } from './links/links.module'
     MessagesModule,
     AssetsModule,
     LinksModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

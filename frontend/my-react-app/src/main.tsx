@@ -35,7 +35,7 @@ function RootContent() {
     return null
   }
 
-  return user ? <MainPage /> : <LoginPage />
+  return user ? <MainPage currentUser={user} /> : <LoginPage />
 }
 
 
