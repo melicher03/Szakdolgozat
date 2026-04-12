@@ -41,6 +41,7 @@ export class LinksService {
       url: dto.url,
       title: dto.title,
       uploadedBy: dto.uploadedBy,
+      categoryName: dto.categoryName.trim(),
     })
 
     return this.assetsRepository.save(asset)

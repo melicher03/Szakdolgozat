@@ -54,6 +54,36 @@ const panelStyle = {
 const CALENDAR_SECTION = "__calendar__";
 const NO_CATEGORY = "";
 
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp"];
+const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "m4v"];
+
+const getFileExtension = (value: string): string => {
+  try {
+    const url = new URL(value);
+    const pathname = url.pathname;
+    const lastDot = pathname.lastIndexOf(".");
+    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
+  } catch {
+    const pathname = value.split("?")[0].split("#")[0];
+    const lastDot = pathname.lastIndexOf(".");
+    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
+  }
+};
+
+const getMediaKind = (value: string): "image" | "video" | null => {
+  const extension = getFileExtension(value);
+
+  if (IMAGE_EXTENSIONS.includes(extension)) {
+    return "image";
+  }
+
+  if (VIDEO_EXTENSIONS.includes(extension)) {
+    return "video";
+  }
+
+  return null;
+};
+
 const Sections: React.FC<SectionProps> = ({
   apiBaseUrl,
   selectedGroupId,
@@ -239,6 +269,47 @@ const Sections: React.FC<SectionProps> = ({
     [filteredAssets],
   );
 
+  const renderMediaPreview = (asset: SharedAsset) => {
+    const mediaKind = getMediaKind(asset.url);
+
+    if (mediaKind === "image") {
+      return (
+        <Box
+          component="img"
+          src={asset.url}
+          alt={asset.title || "Uploaded file preview"}
+          sx={{
+            width: "100%",
+            maxHeight: 180,
+            objectFit: "cover",
+            borderRadius: 2,
+            border: "1px solid #292d3b",
+            mb: 1,
+          }}
+        />
+      );
+    }
+
+    if (mediaKind === "video") {
+      return (
+        <Box
+          component="video"
+          src={asset.url}
+          controls
+          sx={{
+            width: "100%",
+            maxHeight: 220,
+            borderRadius: 2,
+            border: "1px solid #292d3b",
+            mb: 1,
+          }}
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Card sx={panelStyle}>
       <Stack spacing={2}>
@@ -310,6 +381,7 @@ const Sections: React.FC<SectionProps> = ({
             <List dense sx={{ maxHeight: 180, overflow: "auto" }}>
               {fileAssets.map((asset) => (
                 <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
+                  {renderMediaPreview(asset)}
                   <ListItemText
                     primary={asset.title || asset.url}
                     secondary={asset.url}
@@ -351,6 +423,7 @@ const Sections: React.FC<SectionProps> = ({
             <List dense sx={{ maxHeight: 180, overflow: "auto" }}>
               {urlAssets.map((asset) => (
                 <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
+                  {renderMediaPreview(asset)}
                   <ListItemText
                     primary={asset.title || asset.url}
                     secondary={asset.url}

@@ -6,11 +6,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { supabase } from '../services/supabaseClient';
 import { cardStyle } from './MainPage';
@@ -30,6 +31,12 @@ interface ChatComponentProps {
   userName: string;
 }
 
+interface AssetCategory {
+  id: number;
+  familyGroupId: number;
+  name: string;
+}
+
 const ChatComponent: React.FC<ChatComponentProps> = ({
   familyGroupId,
   familyGroupName,
@@ -43,11 +50,32 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
-  const [linkTitle, setLinkTitle] = useState('');
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
   const [selectedFile, setselectedFile] = useState<File | null>(null);
-  const [fileTitle, setFileTitle] = useState('');
+  const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? 'media';
+
+  const loadCategories = useCallback(async () => {
+    if (!familyGroupId) {
+      setCategories([]);
+      setCategory('');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`);
+      if (!response.ok) {
+        throw new Error('Failed to load categories');
+      }
+
+      const data = (await response.json()) as AssetCategory[];
+      setCategories(data);
+    } catch {
+      setCategories([]);
+    }
+  }, [familyGroupId]);
 
   const scrollToBottom = () => {
     const container = document.getElementById('chat-scroll-container');
@@ -58,6 +86,31 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  useEffect(() => {
+    if (!isLinkDialogOpen && !isFileDialogOpen) {
+      return;
+    }
+
+    loadCategories();
+  }, [isFileDialogOpen, isLinkDialogOpen, loadCategories]);
+
+  useEffect(() => {
+    if (!isLinkDialogOpen && !isFileDialogOpen) return;
+
+    if (categories.length === 0) {
+      setCategory('');
+      return;
+    }
+
+    setCategory((current) =>
+      categories.some((category) => category.name === current) ? current : categories[0].name,
+    );
+  }, [categories, isLinkDialogOpen, isFileDialogOpen]);
 
   useEffect(() => {
     let socket: Socket | null = null;
@@ -145,13 +198,15 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const closeLinkDialog = () => {
     setIsLinkDialogOpen(false);
     setLinkUrl('');
-    setLinkTitle('');
+    setTitle('');
+    setCategory('');
   };
 
   const closeFileDialog = () => {
     setIsFileDialogOpen(false);
     setselectedFile(null);
-    setFileTitle('');
+    setTitle('');
+    setCategory('');
   };
 
   const handleSaveLink = async () => {
@@ -167,8 +222,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         body: JSON.stringify({
           familyGroupId: Number(familyGroupId),
           url: linkUrl.trim(),
-          title: linkTitle.trim() || undefined,
+          title: title.trim() || undefined,
           uploadedBy: userName,
+          categoryName: category,
         }),
       });
 
@@ -215,11 +271,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           familyGroupId: Number(familyGroupId),
-          title: fileTitle.trim() || selectedFile.name,
+          title: title.trim() || selectedFile.name,
           url: data.publicUrl,
           storagePath,
           fileSize: selectedFile.size,
           uploadedBy: userName,
+          categoryName: category,
         }),
       });
 
@@ -367,8 +424,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
             />
             <TextField
               placeholder="Title (optional)"
-              value={linkTitle}
-              onChange={(e) => setLinkTitle(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               fullWidth
               sx={{
                 '& .MuiInputBase-input': { color: '#f7f7f7' },
@@ -377,6 +434,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
                 },
               }}
             />
+            <TextField
+              select
+              placeholder="Category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              fullWidth
+              sx={{
+                '& .MuiInputBase-input': { color: '#f7f7f7' },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#292d3b' },
+                },
+                '& .MuiSvgIcon-root': { color: '#f7f7f7' },
+              }}
+            >
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.name}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </TextField>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button sx={{ color: "#f7f7f7" }} onClick={closeLinkDialog}>
@@ -413,8 +490,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           )}
           <TextField
             placeholder="Title (optional)"
-            value={fileTitle}
-            onChange={(e) => setFileTitle(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             fullWidth
             sx={{
               '& .MuiInputBase-input': { color: '#f7f7f7' },
@@ -423,6 +500,32 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
               },
             }}
           />
+          <TextField
+            select
+            placeholder="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            fullWidth
+            sx={{
+              '& .MuiInputBase-input': { color: '#f7f7f7' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#292d3b' },
+              },
+              '& .MuiSvgIcon-root': { color: '#f7f7f7' },
+            }}
+          >
+            {categories.length === 0 ? (
+              <MenuItem value="" disabled>
+                No categories available, create one first
+              </MenuItem>
+            ):
+              categories.map((category) => (
+                <MenuItem key={category.id} value={category.name}>
+                  {category.name}
+                </MenuItem>
+              ))
+            }
+          </TextField>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button sx={{ color: "#f7f7f7" }} onClick={closeFileDialog}>

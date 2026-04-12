@@ -140,7 +140,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                 <Grid container spacing={3}>
 
                     {/* Left side */}
-                    <Grid size={{ xs: 12, md: 2.5 }}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <GroupFilesPanel
                             apiBaseUrl="http://localhost:3000"
                             selectedGroupId={selectedGroupId}
@@ -161,7 +161,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                     </Grid>
 
                     {/* Right side */}
-                    <Grid size={{ xs: 12, md: 3 }}>
+                    <Grid size={{ xs: 12, md: 2.5 }}>
                         <Card sx={cardStyle}>
                             <FamilyGroupsPanel
                                 familyGroups={visibleFamilyGroups}

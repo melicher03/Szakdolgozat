@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsInt, IsOptional, IsString, IsUrl, Length } from 'class-validator'
+import { IsInt, IsOptional, IsString, IsUrl } from 'class-validator'
 
 export class CreateLinkDto {
   @Type(() => Number)
@@ -11,10 +11,11 @@ export class CreateLinkDto {
 
   @IsOptional()
   @IsString()
-  @Length(1, 200)
   title?: string
 
   @IsString()
-  @Length(1, 150)
   uploadedBy: string
+
+  @IsString()
+  categoryName: string
 }

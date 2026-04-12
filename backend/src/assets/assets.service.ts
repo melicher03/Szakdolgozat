@@ -1,10 +1,17 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
 import { Repository } from 'typeorm'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { AssetCategory } from '../entities/asset-category.entity'
 import { SharedAsset, SharedAssetType } from '../entities/shared-asset.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
+import { CreateAssetCategoryDto } from './dto/create-asset-category.dto'
 import { CreateFileAssetDto } from './dto/create-file-asset.dto'
 
 @Injectable()
@@ -15,6 +22,8 @@ export class AssetsService {
   constructor(
     @InjectRepository(SharedAsset)
     private readonly assetsRepository: Repository<SharedAsset>,
+    @InjectRepository(AssetCategory)
+    private readonly assetCategoriesRepository: Repository<AssetCategory>,
     @InjectRepository(FamilyGroup)
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
     private readonly configService: ConfigService,
@@ -37,10 +46,49 @@ export class AssetsService {
     })
   }
 
+  async findCategories(familyGroupId?: string): Promise<AssetCategory[]> {
+    const normalizedFamilyGroupId =
+      familyGroupId && familyGroupId.trim().length > 0 ? Number(familyGroupId) : undefined
+
+    return this.assetCategoriesRepository.find({
+      where: normalizedFamilyGroupId ? { familyGroupId: normalizedFamilyGroupId } : {}
+    })
+  }
+
+  async createCategory(dto: CreateAssetCategoryDto): Promise<AssetCategory> {
+    const familyGroup = await this.familyGroupsRepository.findOne({
+      where: { id: dto.familyGroupId },
+    })
+
+    if (!familyGroup) {
+      throw new NotFoundException(`Family group with id ${dto.familyGroupId} was not found`)
+    }
+
+    const name = dto.name.trim()
+    if (!name) {
+      throw new BadRequestException('Category name is required')
+    }
+
+    const existingCategory = await this.assetCategoriesRepository.findOne({
+      where: { familyGroupId: dto.familyGroupId, name },
+    })
+
+    if (existingCategory) {
+      return existingCategory
+    }
+
+    const category = this.assetCategoriesRepository.create({
+      familyGroupId: dto.familyGroupId,
+      name,
+    })
+
+    return this.assetCategoriesRepository.save(category)
+  }
+
   async createFileAsset(dto: CreateFileAssetDto): Promise<SharedAsset> {
-    const familyGroup = 
+    const familyGroup =
       await this.familyGroupsRepository.findOne({ where: { id: dto.familyGroupId } })
-    
+
     if (!familyGroup) {
       throw new NotFoundException(`Family group with id ${dto.familyGroupId} was not found`)
     }
@@ -53,6 +101,7 @@ export class AssetsService {
       storagePath: dto.storagePath,
       fileSize: dto.fileSize,
       uploadedBy: dto.uploadedBy,
+      categoryName: dto.categoryName.trim(),
     })
 
     return this.assetsRepository.save(asset)
@@ -65,7 +114,7 @@ export class AssetsService {
     }
 
     if (asset.type === SharedAssetType.FILE && asset.storagePath) {
-      const supabase = this.supabase      
+      const supabase = this.supabase
       if (!supabase) {
         throw new InternalServerErrorException('Supabase client is not configured')
       }

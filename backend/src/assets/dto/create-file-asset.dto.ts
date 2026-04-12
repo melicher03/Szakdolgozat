@@ -21,4 +21,7 @@ export class CreateFileAssetDto {
 
   @IsString()
   uploadedBy: string
+
+  @IsString()
+  categoryName: string
 }

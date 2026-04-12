@@ -33,8 +33,8 @@ export class SharedAsset {
   @Column({ nullable: true })
   fileSize?: number
 
-  @Column({ nullable: true })
-  categoryName?: string
+  @Column()
+  categoryName: string
 
   @Column()
   familyGroupId: number
