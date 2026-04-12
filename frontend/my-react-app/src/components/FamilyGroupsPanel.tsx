@@ -57,7 +57,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
 
     return [...new Set(source.map((value) => value.trim().toLowerCase())
       .filter((value) => value.length > 0),)].sort((left, right) => left.localeCompare(right));
-      
+
   }, [activeGroup?.members, activeGroup?.ownerId, userOptions]);
 
   useEffect(() => {
@@ -250,18 +250,22 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
           paper: { sx: cardStyle },
         }}
       >
-        <DialogTitle>Edit family group</DialogTitle>
+        <DialogTitle sx={{color: '#f7f7f7'}}>Edit family group</DialogTitle>
         <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
           <TextField
-            label="Group name"
+            placeholder="Group name"
             value={editName}
             onChange={(event) => setEditName(event.target.value)}
             fullWidth
+            sx={{
+              "& .MuiInputBase-input": { color: "#f7f7f7" },
+              "& .MuiInputBase-input::placeholder": { color: "#f7f7f7", opacity: 1 },
+            }}
           />
 
           <TextField
             select
-            label="Members"
+            placeholder="Members"
             fullWidth
             value={editMembers}
             onChange={(event) => {
@@ -272,6 +276,10 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
               select: {
                 multiple: true,
               },
+            }}
+            sx={{
+              "& .MuiInputBase-input": { color: "#f7f7f7" },
+              "& .MuiInputBase-input::placeholder": { color: "#f7f7f7", opacity: 1 },
             }}
           >
             {editMemberOptions.map((email) => (
