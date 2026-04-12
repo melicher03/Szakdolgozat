@@ -316,6 +316,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '5px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#9e9e9e',
+            borderRadius: '10px',
+          },
           borderRadius: 1,
           p: 2,
           border: '1px solid #292d3b',

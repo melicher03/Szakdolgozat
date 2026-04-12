@@ -2,12 +2,11 @@ import {
   Box,
   Button,
   Card,
-  Chip,
+  Dialog,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -15,6 +14,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import CalendarEventPanel from "./CalendarEventPanel";
+import { cardStyle } from "./MainPage";
+import { CalendarIcon } from "@mui/x-date-pickers";
 
 type SharedAsset = {
   id: string;
@@ -38,17 +39,6 @@ type SectionProps = {
   apiBaseUrl: string;
   selectedGroupId: number | null;
   onCreateCalendarEvent: () => void;
-};
-
-const panelStyle = {
-  bgcolor: "#141620",
-  borderRadius: 3,
-  border: 1,
-  borderColor: "#292d3b",
-  p: 2,
-  color: "#f7f7f7",
-  maxHeight: "70vh",
-  overflowY: "auto",
 };
 
 const CALENDAR_SECTION = "__calendar__";
@@ -94,6 +84,7 @@ const Sections: React.FC<SectionProps> = ({
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>(CALENDAR_SECTION);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null);
 
   const fetchAssets = useCallback(async () => {
     if (!selectedGroupId) {
@@ -226,34 +217,6 @@ const Sections: React.FC<SectionProps> = ({
     }
   };
 
-  const setAssetCategory = async (assetId: string, category: string) => {
-    if (!selectedGroupId) return;
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/assets/${assetId}/category`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          categoryName: category === NO_CATEGORY ? null : category,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update asset category");
-      }
-
-      const updatedAsset = (await response.json()) as SharedAsset;
-      setAssets((prev) =>
-        prev.map((asset) => (asset.id === updatedAsset.id ? updatedAsset : asset)),
-      );
-      void fetchCategories();
-    } catch {
-      setError("Failed to update asset category.");
-    }
-  };
-
   const filteredAssets = useMemo(() => {
     if (selectedSection === CALENDAR_SECTION) return [];
     return assets.filter((asset) => (asset.categoryName ?? NO_CATEGORY) === selectedSection);
@@ -285,7 +248,14 @@ const Sections: React.FC<SectionProps> = ({
             borderRadius: 2,
             border: "1px solid #292d3b",
             mb: 1,
+            cursor: "zoom-in",
           }}
+          onClick={() =>
+            setFullscreenImage({
+              url: asset.url,
+              title: asset.title,
+            })
+          }
         />
       );
     }
@@ -311,18 +281,24 @@ const Sections: React.FC<SectionProps> = ({
   };
 
   return (
-    <Card sx={panelStyle}>
+    <Card sx={cardStyle}>
       <Stack spacing={2}>
         <Typography variant="h6" fontWeight="bold">
           Sections
         </Typography>
+
+        {error && (
+          <Typography variant="caption" color="#ff8a80">
+            {error}
+          </Typography>
+        )}
 
         <Stack direction="row" spacing={1}>
           <TextField
             size="small"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="New category (e.g. Recipes)"
+            placeholder="New category"
             fullWidth
             sx={{
               "& .MuiInputBase-input": { color: "#f7f7f7" },
@@ -336,33 +312,55 @@ const Sections: React.FC<SectionProps> = ({
           </Button>
         </Stack>
 
-        <List dense sx={{ border: "1px solid #292d3b", borderRadius: 2, p: 0.5 }}>
-          <ListItem sx={{ px: 0 }} disablePadding>
+        <List
+          sx={{
+            maxHeight: "15vh",
+            overflow: "auto",
+            border: "1px solid #292d3b",
+            borderRadius: 3,
+            p: 0.5,
+            "&::-webkit-scrollbar": {
+              width: "5px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "#9e9e9e",
+              borderRadius: "10px",
+            },
+          }}
+        >
+          <ListItem disablePadding>
             <ListItemButton
               selected={selectedSection === CALENDAR_SECTION}
               onClick={() => setSelectedSection(CALENDAR_SECTION)}
-              sx={{ borderRadius: 1 }}
+              sx={{ borderRadius: 3 }}
             >
               <ListItemText
                 primary="Calendar"
                 slotProps={{
-                  primary: { sx: { color: "#f7f7f7", fontSize: 13 } },
+                  primary: { sx: { color: "#f7f7f7", fontSize: 15 } },
                 }}
               />
+              <CalendarIcon />
             </ListItemButton>
           </ListItem>
 
           {categories.map((category) => (
-            <ListItem key={category} sx={{ px: 0 }} disablePadding>
+            <ListItem key={category} disablePadding>
               <ListItemButton
                 selected={selectedSection === category}
                 onClick={() => setSelectedSection(category)}
-                sx={{ borderRadius: 1 }}
+                sx={{ borderRadius: 3 }}
               >
                 <ListItemText
                   primary={category}
                   slotProps={{
-                    primary: { sx: { color: "#f7f7f7", fontSize: 13 } },
+                    primary: {
+                      sx: {
+                        color: "#f7f7f7",
+                        fontSize: 15,
+                        fontWeight: selectedSection === category ? "bold" : "normal",
+                      },
+                    },
                   }}
                 />
               </ListItemButton>
@@ -374,124 +372,100 @@ const Sections: React.FC<SectionProps> = ({
           <CalendarEventPanel onCreateCalendarEvent={onCreateCalendarEvent} />
         ) : (
           <>
-            <Typography variant="subtitle2">
-              {selectedSection} files ({fileAssets.length})
-            </Typography>
-
-            <List dense sx={{ maxHeight: 180, overflow: "auto" }}>
+            <List
+              sx={{
+                maxHeight: "30vh",
+                overflowY: "auto",
+                overflowX: "hidden",
+                "&::-webkit-scrollbar": {
+                  width: "5px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#9e9e9e",
+                  borderRadius: "10px",
+                },
+              }}
+            >
               {fileAssets.map((asset) => (
-                <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
+                <ListItem key={asset.id} sx={{ px: 0 }}>
                   {renderMediaPreview(asset)}
-                  <ListItemText
-                    primary={asset.title || asset.url}
-                    secondary={asset.url}
-                    slotProps={{
-                      primary: { sx: { color: "#f7f7f7", fontSize: 13, wordBreak: "break-word" } },
-                      secondary: { sx: { color: "#9fa6c2", fontSize: 12, wordBreak: "break-word" } },
-                    }}
-                  />
-                  <TextField
-                    select
-                    size="small"
-                    value={asset.categoryName ?? NO_CATEGORY}
-                    onChange={(e) => setAssetCategory(asset.id, e.target.value)}
-                    sx={{
-                      mt: 1,
-                      minWidth: 150,
-                      "& .MuiInputBase-input": { color: "#f7f7f7" },
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": { borderColor: "#292d3b" },
-                      },
-                      "& .MuiSvgIcon-root": { color: "#f7f7f7" },
-                    }}
-                  >
-                    <MenuItem value={NO_CATEGORY}>No category</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={`${asset.id}-${category}`} value={category}>
-                        {category}
-                      </MenuItem>
-                    ))}
-                  </TextField>
                 </ListItem>
               ))}
             </List>
 
-            <Typography variant="subtitle2">
-              {selectedSection} links ({urlAssets.length})
-            </Typography>
-
-            <List dense sx={{ maxHeight: 180, overflow: "auto" }}>
+            <List
+              sx={{
+                maxHeight: "15vh",
+                overflow: "auto",
+                "&::-webkit-scrollbar": {
+                  width: "5px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#9e9e9e",
+                  borderRadius: "10px",
+                },
+              }}
+            >
               {urlAssets.map((asset) => (
                 <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
-                  {renderMediaPreview(asset)}
                   <ListItemText
-                    primary={asset.title || asset.url}
+                    primary={asset.title || ''}
                     secondary={asset.url}
                     slotProps={{
-                      primary: { sx: { color: "#f7f7f7", fontSize: 13, wordBreak: "break-word" } },
-                      secondary: { sx: { color: "#9fa6c2", fontSize: 12, wordBreak: "break-word" } },
+                      primary: { sx: { color: "#f7f7f7", fontSize: 15, wordBreak: "break-word" } },
+                      secondary: { sx: { color: "#9fa6c2", fontSize: 14, wordBreak: "break-word" } },
                     }}
                   />
-                  <TextField
-                    select
-                    size="small"
-                    value={asset.categoryName ?? NO_CATEGORY}
-                    onChange={(e) => setAssetCategory(asset.id, e.target.value)}
-                    sx={{
-                      mt: 1,
-                      minWidth: 150,
-                      "& .MuiInputBase-input": { color: "#f7f7f7" },
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": { borderColor: "#292d3b" },
-                      },
-                      "& .MuiSvgIcon-root": { color: "#f7f7f7" },
-                    }}
-                  >
-                    <MenuItem value={NO_CATEGORY}>No category</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={`${asset.id}-${category}`} value={category}>
-                        {category}
-                      </MenuItem>
-                    ))}
-                  </TextField>
                 </ListItem>
               ))}
             </List>
 
-            {error && (
-              <Typography variant="caption" sx={{ color: "#ff8a80" }}>
-                {error}
-              </Typography>
-            )}
-
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {categories.map((category) => (
-                <Chip
-                  key={category}
-                  label={category}
-                  size="small"
-                  onClick={() => setSelectedSection(category)}
-                  variant={selectedSection === category ? "filled" : "outlined"}
-                />
-              ))}
-            </Box>
-
             {assets.length > 0 && filteredAssets.length === 0 && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="#f7f7f7">
                 No files or links are assigned to this category yet.
               </Typography>
-            )}
-
-            {assets.length === 0 && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  No stored files or links in this group yet.
-                </Typography>
-              </Box>
             )}
           </>
         )}
       </Stack>
+
+      <Dialog
+        open={Boolean(fullscreenImage)}
+        onClose={() => setFullscreenImage(null)}
+        fullScreen
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "rgba(0, 0, 0, 0.95)",
+            },
+          },
+        }}
+      >
+        {fullscreenImage && (
+          <Box
+            sx={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
+            }}
+            onClick={() => setFullscreenImage(null)}
+          >
+            <Box
+              component="img"
+              src={fullscreenImage.url}
+              alt={fullscreenImage.title || "Image preview"}
+              sx={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+        )}
+      </Dialog>
     </Card>
   );
 };
