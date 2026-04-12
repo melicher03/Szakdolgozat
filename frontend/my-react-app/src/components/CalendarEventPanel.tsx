@@ -110,9 +110,7 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
         sx={{
           "& .MuiBadge-badge": {
             backgroundColor: "#4da3ff",
-            boxShadow: "0 0 0 2px #141620",
-            bottom: 4,
-            right: 4,
+            boxShadow: "0 0 0 2px #000000"
           },
         }}
       >
@@ -163,6 +161,9 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
                 color: "#f7f7f7",
                 "& .MuiPickersDay-root": {
                   color: "#f7f7f7",
+                },
+                "& .MuiPickersDay-root.MuiPickersDay-today:not(.Mui-selected)": {
+                  border: "2px solid #9fa6c2",
                 },
                 "& .MuiDayCalendar-weekDayLabel": {
                   color: "#f7f7f7",
