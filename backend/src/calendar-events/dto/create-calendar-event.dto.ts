@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsOptional, IsString, IsUUID, Length } from 'class-validator'
+import { IsDateString, IsInt, IsOptional, IsString, Length } from 'class-validator'
 
 export class CreateCalendarEventDto {
   @IsString()
@@ -16,6 +16,6 @@ export class CreateCalendarEventDto {
   @IsDateString()
   endAt: string
   
-  @IsUUID()
-  familyGroupId: string
+  @IsInt()
+  familyGroupId: number
 }

@@ -27,7 +27,7 @@ export class CalendarEvent {
   endAt: Date
 
   @Column()
-  familyGroupId: string
+  familyGroupId: number
 
   @ManyToOne(() => FamilyGroup)
   @JoinColumn({ name: 'familyGroupId' })

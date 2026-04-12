@@ -51,9 +51,14 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
     const [familyGroups, setFamilyGroups] = useState<FamilyGroup[] | null>(null)
     const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
     const [uploadRefreshTrigger, setUploadRefreshTrigger] = useState(0)
+    const [calendarRefreshTrigger, setCalendarRefreshTrigger] = useState(0)
 
     const handleUploadSuccess = useCallback(() => {
         setUploadRefreshTrigger(prev => prev + 1)
+    }, [])
+
+    const handleCalendarEventCreated = useCallback(() => {
+        setCalendarRefreshTrigger(prev => prev + 1)
     }, [])
 
     const fetchGroups = useCallback(async () => {
@@ -115,6 +120,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                     cardStyle={cardStyle}
                     familyGroups={visibleFamilyGroups}
                     selectedGroupId={selectedGroupId}
+                    onEventCreated={handleCalendarEventCreated}
                 />
 
                 <Box
@@ -151,6 +157,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                             selectedGroupId={selectedGroupId}
                             onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
                             uploadRefreshTrigger={uploadRefreshTrigger}
+                            calendarRefreshTrigger={calendarRefreshTrigger}
                         />
                     </Grid>
 

@@ -40,6 +40,7 @@ type SectionProps = {
   selectedGroupId: number | null;
   onCreateCalendarEvent: () => void;
   uploadRefreshTrigger?: number;
+  calendarRefreshTrigger?: number;
 };
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"];
@@ -51,6 +52,7 @@ const Sections: React.FC<SectionProps> = ({
   selectedGroupId,
   onCreateCalendarEvent,
   uploadRefreshTrigger,
+  calendarRefreshTrigger,
 }) => {
   const [assets, setAssets] = useState<SharedAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -373,7 +375,12 @@ const Sections: React.FC<SectionProps> = ({
         </List>
 
         {selectedSection === "calendar" ? (
-          <CalendarEventPanel onCreateCalendarEvent={onCreateCalendarEvent} />
+          <CalendarEventPanel 
+            onCreateCalendarEvent={onCreateCalendarEvent}
+            selectedGroupId={selectedGroupId}
+            apiBaseUrl={apiBaseUrl}
+            refreshTrigger={(uploadRefreshTrigger ?? 0) + (calendarRefreshTrigger ?? 0)}
+          />
         ) : (
           <>
             <List

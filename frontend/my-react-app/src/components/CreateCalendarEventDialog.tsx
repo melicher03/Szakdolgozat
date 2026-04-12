@@ -21,6 +21,7 @@ interface CreateCalendarEventDialogProps {
     cardStyle?: SxProps;
     familyGroups: FamilyGroups[] | null;
     selectedGroupId: number | null;
+    onEventCreated?: () => void;
 }
 
 type FieldErrors = {
@@ -37,6 +38,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
     cardStyle,
     familyGroups,
     selectedGroupId,
+    onEventCreated,
 }) => {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
@@ -149,7 +151,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                 body: JSON.stringify({
                     title: trimmedTitle,
                     description: description.trim() || "",
-                    familyGroupId: familyGroupId.trim(),
+                    familyGroupId: Number(familyGroupId.trim()),
                     startAt: startDate.toISOString(),
                     endAt: endDate.toISOString(),
                 }),
@@ -166,6 +168,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
             setEndAt("")
             setErrors(nextErrors)
             onClose()
+            onEventCreated?.()
         } catch {
             setErrors({
                 ...nextErrors,

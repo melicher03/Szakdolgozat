@@ -16,6 +16,16 @@ export class CalendarEventsService {
   ) {}
 
   async create(createCalendarEventDto: CreateCalendarEventDto): Promise<CalendarEvent> {
+    const familyGroup = await this.familyGroupsRepository.findOne({
+      where: { id: createCalendarEventDto.familyGroupId },
+    })
+
+    if (!familyGroup) {
+      throw new BadRequestException(
+        `Family group with id ${createCalendarEventDto.familyGroupId} does not exist`,
+      )
+    }
+
     const startAt = new Date(createCalendarEventDto.startAt)
     const endAt = new Date(createCalendarEventDto.endAt)
 
@@ -29,8 +39,11 @@ export class CalendarEventsService {
   }
 
   async findAll(familyGroupId?: string): Promise<CalendarEvent[]> {
+    const normalizedFamilyGroupId =
+      familyGroupId && familyGroupId.trim().length > 0 ? Number(familyGroupId) : undefined
+
     return this.calendarEventsRepository.find({
-      where: familyGroupId ? { familyGroupId } : {},
+      where: normalizedFamilyGroupId ? { familyGroupId: normalizedFamilyGroupId } : {},
       order: { startAt: 'ASC' },
     })
   }
@@ -45,6 +58,18 @@ export class CalendarEventsService {
 
   async update(id: string, updateCalendarEventDto: UpdateCalendarEventDto): Promise<CalendarEvent> {
     const calendarEvent = await this.findOne(id)
+
+    if (updateCalendarEventDto.familyGroupId !== undefined) {
+      const familyGroup = await this.familyGroupsRepository.findOne({
+        where: { id: updateCalendarEventDto.familyGroupId },
+      })
+
+      if (!familyGroup) {
+        throw new BadRequestException(
+          `Family group with id ${updateCalendarEventDto.familyGroupId} does not exist`,
+        )
+      }
+    }
 
     const nextStartAt = updateCalendarEventDto.startAt
       ? new Date(updateCalendarEventDto.startAt)

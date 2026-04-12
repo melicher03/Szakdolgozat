@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
 import { CalendarEvent } from '../entities/calendar-event.entity'
 import { CalendarEventsService } from './calendar-events.service'
 import { CreateCalendarEventDto } from './dto/create-calendar-event.dto'
