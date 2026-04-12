@@ -50,6 +50,11 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
 
     const [familyGroups, setFamilyGroups] = useState<FamilyGroup[] | null>(null)
     const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
+    const [uploadRefreshTrigger, setUploadRefreshTrigger] = useState(0)
+
+    const handleUploadSuccess = useCallback(() => {
+        setUploadRefreshTrigger(prev => prev + 1)
+    }, [])
 
     const fetchGroups = useCallback(async () => {
         const response = await fetch("http://localhost:3000/family-groups");
@@ -145,6 +150,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                             apiBaseUrl="http://localhost:3000"
                             selectedGroupId={selectedGroupId}
                             onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
+                            uploadRefreshTrigger={uploadRefreshTrigger}
                         />
                     </Grid>
 
@@ -156,6 +162,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                                 familyGroupName={visibleFamilyGroups?.find((g) => g.id === selectedGroupId)?.name ?? "Select a family group"}
                                 userId={ (currentUser.email ?? currentUser.id).trim().toLowerCase() }
                                 userName={currentUser.email ?? currentUser.id}
+                                onUploadSuccess={handleUploadSuccess}
                             />
                         </Card>
                     </Grid>

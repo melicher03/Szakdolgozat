@@ -39,53 +39,47 @@ type SectionProps = {
   apiBaseUrl: string;
   selectedGroupId: number | null;
   onCreateCalendarEvent: () => void;
+  uploadRefreshTrigger?: number;
 };
 
-const CALENDAR_SECTION = "__calendar__";
-const NO_CATEGORY = "";
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"];
+const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v"];
 
-const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp"];
-const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "m4v"];
-
-const getFileExtension = (value: string): string => {
-  try {
-    const url = new URL(value);
-    const pathname = url.pathname;
-    const lastDot = pathname.lastIndexOf(".");
-    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
-  } catch {
-    const pathname = value.split("?")[0].split("#")[0];
-    const lastDot = pathname.lastIndexOf(".");
-    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
-  }
-};
-
-const getMediaKind = (value: string): "image" | "video" | null => {
-  const extension = getFileExtension(value);
-
-  if (IMAGE_EXTENSIONS.includes(extension)) {
-    return "image";
-  }
-
-  if (VIDEO_EXTENSIONS.includes(extension)) {
-    return "video";
-  }
-
-  return null;
-};
 
 const Sections: React.FC<SectionProps> = ({
   apiBaseUrl,
   selectedGroupId,
   onCreateCalendarEvent,
+  uploadRefreshTrigger,
 }) => {
   const [assets, setAssets] = useState<SharedAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedSection, setSelectedSection] = useState<string>(CALENDAR_SECTION);
+  const [selectedSection, setSelectedSection] = useState<string>("calendar");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null);
-
+  
+  const getFileExtension = (value: string): string => {
+    const url = new URL(value);
+    const pathname = url.pathname;
+    const lastDot = pathname.lastIndexOf(".");
+    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
+  };
+  
+  const getFileType = (value: string): "image" | "video" | null => {
+    const extension = getFileExtension(value);
+  
+    if (IMAGE_EXTENSIONS.includes(extension)) {
+      return "image";
+    }
+  
+    if (VIDEO_EXTENSIONS.includes(extension)) {
+      return "video";
+    }
+  
+    return null;
+  };
+  
   const fetchAssets = useCallback(async () => {
     if (!selectedGroupId) {
       setAssets([]);
@@ -129,8 +123,8 @@ const Sections: React.FC<SectionProps> = ({
   }, [apiBaseUrl, selectedGroupId]);
 
   useEffect(() => {
-    void fetchAssets();
-    void fetchCategories();
+    fetchAssets();
+    fetchCategories();
   }, [fetchAssets, fetchCategories]);
 
   useEffect(() => {
@@ -152,12 +146,16 @@ const Sections: React.FC<SectionProps> = ({
     });
 
     socket.on("category-created", () => {
-      void fetchCategories();
+      fetchCategories();
     });
 
     socket.on("asset-category-updated", () => {
-      void fetchAssets();
-      void fetchCategories();
+      fetchAssets();
+      fetchCategories();
+    });
+
+    socket.on("asset-created", () => {
+      fetchAssets();
     });
 
     return () => {
@@ -169,19 +167,25 @@ const Sections: React.FC<SectionProps> = ({
   useEffect(() => {
     if (!selectedGroupId) {
       setCategories([]);
-      setSelectedSection(CALENDAR_SECTION);
+      setSelectedSection("calendar");
       return;
     }
   }, [selectedGroupId]);
 
   useEffect(() => {
-    if (selectedSection === CALENDAR_SECTION) return;
+    if (selectedSection === "calendar") return;
 
     if (!categories.includes(selectedSection)) {
-      setSelectedSection(CALENDAR_SECTION);
+      setSelectedSection("calendar");
     }
   }, [categories, selectedSection]);
+  useEffect(() => {
+    if (uploadRefreshTrigger !== undefined && uploadRefreshTrigger > 0) {
+      void fetchAssets();
+    }
+  }, [uploadRefreshTrigger, fetchAssets]);
 
+  
   const addCategory = async () => {
     if (!selectedGroupId) return;
 
@@ -211,15 +215,15 @@ const Sections: React.FC<SectionProps> = ({
       });
       setSelectedSection(createdCategory.name);
       setNewCategoryName("");
-      void fetchCategories();
+      fetchCategories();
     } catch {
       setError("Failed to create category.");
     }
   };
 
   const filteredAssets = useMemo(() => {
-    if (selectedSection === CALENDAR_SECTION) return [];
-    return assets.filter((asset) => (asset.categoryName ?? NO_CATEGORY) === selectedSection);
+    if (selectedSection === "calendar") return [];
+    return assets.filter((asset) => (asset.categoryName ?? "") === selectedSection);
   }, [assets, selectedSection]);
 
   const fileAssets = useMemo(
@@ -233,14 +237,14 @@ const Sections: React.FC<SectionProps> = ({
   );
 
   const renderMediaPreview = (asset: SharedAsset) => {
-    const mediaKind = getMediaKind(asset.url);
+    const mediaKind = getFileType(asset.url);
 
     if (mediaKind === "image") {
       return (
         <Box
           component="img"
           src={asset.url}
-          alt={asset.title || "Uploaded file preview"}
+          alt={asset.title || "Uploaded image preview"}
           sx={{
             width: "100%",
             maxHeight: 180,
@@ -330,8 +334,8 @@ const Sections: React.FC<SectionProps> = ({
         >
           <ListItem disablePadding>
             <ListItemButton
-              selected={selectedSection === CALENDAR_SECTION}
-              onClick={() => setSelectedSection(CALENDAR_SECTION)}
+              selected={selectedSection === "calendar"}
+              onClick={() => setSelectedSection("calendar")}
               sx={{ borderRadius: 3 }}
             >
               <ListItemText
@@ -368,7 +372,7 @@ const Sections: React.FC<SectionProps> = ({
           ))}
         </List>
 
-        {selectedSection === CALENDAR_SECTION ? (
+        {selectedSection === "calendar" ? (
           <CalendarEventPanel onCreateCalendarEvent={onCreateCalendarEvent} />
         ) : (
           <>
@@ -408,14 +412,28 @@ const Sections: React.FC<SectionProps> = ({
             >
               {urlAssets.map((asset) => (
                 <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
-                  <ListItemText
-                    primary={asset.title || ''}
-                    secondary={asset.url}
-                    slotProps={{
-                      primary: { sx: { color: "#f7f7f7", fontSize: 15, wordBreak: "break-word" } },
-                      secondary: { sx: { color: "#9fa6c2", fontSize: 14, wordBreak: "break-word" } },
+                  <Box
+                    component="a"
+                    href={asset.url}
+                    target="_blank"
+                    sx={{
+                      color: "#f7f7f7",
+                      textDecoration: "none",
                     }}
-                  />
+                  >
+                    <ListItemText
+                      primary={asset.title ? `Title: ${asset.title}` : "Link:"}
+                      secondary={asset.url}
+                      slotProps={{
+                        primary: {
+                          sx: { color: "#9fa6c2", fontSize: 15, wordBreak: "break-word" },
+                        },
+                        secondary: {
+                          sx: { color: "#9fa6c2", fontSize: 14, wordBreak: "break-word" },
+                        },
+                      }}
+                    />
+                  </Box>
                 </ListItem>
               ))}
             </List>

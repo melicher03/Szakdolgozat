@@ -29,6 +29,7 @@ interface ChatComponentProps {
   familyGroupName: string;
   userId: string;
   userName: string;
+  onUploadSuccess?: () => void;
 }
 
 interface AssetCategory {
@@ -42,6 +43,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   familyGroupName,
   userId,
   userName,
+  onUploadSuccess,
 }) => {
   const [currentSocket, setCurrentSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -236,6 +238,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
       setResult('Link uploaded successfully.');
       closeLinkDialog();
+      onUploadSuccess?.();
     } catch (error) {
       setResult(`Link upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -288,6 +291,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
       setResult('Media uploaded successfully.');
       closeFileDialog();
+      onUploadSuccess?.();
     } catch (error) {
       setResult(
         `Media upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

@@ -11,6 +11,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { AssetCategory } from '../entities/asset-category.entity'
 import { SharedAsset, SharedAssetType } from '../entities/shared-asset.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
+import { MessagesGateway } from '../messages/messages.gateway'
 import { CreateAssetCategoryDto } from './dto/create-asset-category.dto'
 import { CreateFileAssetDto } from './dto/create-file-asset.dto'
 
@@ -27,6 +28,7 @@ export class AssetsService {
     @InjectRepository(FamilyGroup)
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
     private readonly configService: ConfigService,
+    private readonly messagesGateway: MessagesGateway,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
     const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
@@ -82,7 +84,12 @@ export class AssetsService {
       name,
     })
 
-    return this.assetCategoriesRepository.save(category)
+    const savedCategory = await this.assetCategoriesRepository.save(category)
+    this.messagesGateway.server
+      .to(String(dto.familyGroupId))
+      .emit('category-created', savedCategory)
+
+    return savedCategory
   }
 
   async createFileAsset(dto: CreateFileAssetDto): Promise<SharedAsset> {
@@ -101,10 +108,15 @@ export class AssetsService {
       storagePath: dto.storagePath,
       fileSize: dto.fileSize,
       uploadedBy: dto.uploadedBy,
-      categoryName: dto.categoryName.trim(),
+      categoryName: dto.categoryName?.trim() || undefined,
     })
 
-    return this.assetsRepository.save(asset)
+    const savedAsset = await this.assetsRepository.save(asset)
+    this.messagesGateway.server
+      .to(String(dto.familyGroupId))
+      .emit('asset-created', savedAsset)
+
+    return savedAsset
   }
 
   async remove(id: string): Promise<void> {

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { SharedAsset, SharedAssetType } from '../entities/shared-asset.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
+import { MessagesGateway } from '../messages/messages.gateway'
 import { CreateLinkDto } from './dto/create-link.dto'
 
 @Injectable()
@@ -12,6 +13,7 @@ export class LinksService {
     private readonly assetsRepository: Repository<SharedAsset>,
     @InjectRepository(FamilyGroup)
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
+    private readonly messagesGateway: MessagesGateway,
   ) {}
 
   async findAll(familyGroupId?: string): Promise<SharedAsset[]> {
@@ -41,9 +43,14 @@ export class LinksService {
       url: dto.url,
       title: dto.title,
       uploadedBy: dto.uploadedBy,
-      categoryName: dto.categoryName.trim(),
+      categoryName: dto.categoryName?.trim() || undefined,
     })
 
-    return this.assetsRepository.save(asset)
+    const savedAsset = await this.assetsRepository.save(asset)
+    this.messagesGateway.server
+      .to(String(dto.familyGroupId))
+      .emit('asset-created', savedAsset)
+
+    return savedAsset
   }
 }
