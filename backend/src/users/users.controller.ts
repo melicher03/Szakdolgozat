@@ -6,7 +6,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(@Query('query') query?: string) {
-    return this.usersService.findAll(query)
+  findAll() {
+    return this.usersService.findAll()
   }
 }

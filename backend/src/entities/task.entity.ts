@@ -8,7 +8,7 @@ export class Task {
   @Column({ length: 150 })
   title: string
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ nullable: true })
   description?: string
 
   @Column({ default: false })
