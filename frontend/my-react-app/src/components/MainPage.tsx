@@ -168,7 +168,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                                 selectedGroupId={selectedGroupId}
                                 onSelectGroup={setSelectedGroupId}
                                 onCreateFamilyGroup={handleClickOpenCreateFamilyGroup}
-                                onGroupsChanged={() => void fetchGroups()}
+                                onGroupsChanged={() => fetchGroups()}
                             />
                         </Card>
                     </Grid>

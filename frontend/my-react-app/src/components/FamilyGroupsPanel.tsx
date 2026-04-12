@@ -15,7 +15,6 @@ import {
   Stack,
   TextField,
   Typography,
-  type SxProps,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { cardStyle } from "./MainPage";
@@ -47,8 +46,6 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
   const [editName, setEditName] = useState("");
   const [editMembers, setEditMembers] = useState<string[]>([]);
   const [userOptions, setUserOptions] = useState<string[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
   const editMemberOptions = useMemo(() => {
@@ -58,22 +55,15 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
       activeGroup?.ownerId ?? "",
     ];
 
-    return Array.from(
-      new Set(
-        source
-          .map((value) => value.trim().toLowerCase())
-          .filter((value) => value.length > 0),
-      ),
-    ).sort((left, right) => left.localeCompare(right));
+    return [...new Set(source.map((value) => value.trim().toLowerCase())
+      .filter((value) => value.length > 0),)].sort((left, right) => left.localeCompare(right));
+      
   }, [activeGroup?.members, activeGroup?.ownerId, userOptions]);
 
   useEffect(() => {
-    let isActive = true;
-
     const loadUsers = async () => {
       if (!openEditDialog) return;
 
-      setIsLoadingUsers(true);
       try {
         const response = await fetch("http://localhost:3000/users");
         if (!response.ok) {
@@ -88,26 +78,13 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
               .filter((email): email is string => Boolean(email)),
           ),
         );
-
-        if (isActive) {
-          setUserOptions(nextUsers);
-        }
+        setUserOptions(nextUsers);
       } catch {
-        if (isActive) {
-          setUserOptions([]);
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingUsers(false);
-        }
+        setUserOptions([]);
       }
     };
 
-    void loadUsers();
-
-    return () => {
-      isActive = false;
-    };
+    loadUsers();
   }, [openEditDialog]);
 
   const handleOpenEdit = (group: FamilyGroup) => {
@@ -144,7 +121,6 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
       return;
     }
 
-    setIsSaving(true);
     setEditError(null);
 
     try {
@@ -167,8 +143,6 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
       onGroupsChanged();
     } catch {
       setEditError("Could not update the family group.");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -209,48 +183,42 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
         }}
       >
         {familyGroups ? (
-          familyGroups.map((chat) => {
-            const isSelected = selectedGroupId === chat.id
+          familyGroups.map((group) => {
+            const isSelected = selectedGroupId === group.id
 
             return (
               <ListItem
-                key={chat.id}
+                key={group.id}
                 disablePadding
                 sx={{ borderBottom: 1, borderColor: '#292d3b' }}
                 secondaryAction={
                   <Stack direction="row" spacing={0.5}>
                     <IconButton
-                      edge="end"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleOpenEdit(chat);
+                      onClick={() => {
+                        handleOpenEdit(group);
                       }}
                       sx={{ color: '#9fa6c2' }}
                     >
-                      <Edit fontSize="small" />
+                      <Edit />
                     </IconButton>
                     <IconButton
-                      edge="end"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        void handleDelete(chat);
+                      onClick={() => {
+                        handleDelete(group);
                       }}
                       sx={{ color: '#ff8a80' }}
                     >
-                      <Delete fontSize="small" />
+                      <Delete />
                     </IconButton>
                   </Stack>
                 }
               >
                 <ListItemButton
                   selected={isSelected}
-                  onClick={() => onSelectGroup(chat.id)}
+                  onClick={() => onSelectGroup(group.id)}
                   sx={{
                     borderRadius: 1,
-                    px: 0,
-                    py: 1,
+                    px: 2,
                     '&.Mui-selected': { bgcolor: '#2a3048' },
-                    '&.Mui-selected:hover': { bgcolor: '#333b57' },
                   }}
                 >
                   <ListItemText>
@@ -259,7 +227,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
                         variant="body1"
                         fontWeight={isSelected ? "bold" : "normal"}
                       >
-                        {chat.name}
+                        {group.name}
                       </Typography>
                     </Box>
                   </ListItemText>
@@ -272,6 +240,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
         )}
       </List>
 
+      {/* Edit */}
       <Dialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
@@ -299,8 +268,11 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
               const value = event.target.value;
               setEditMembers(typeof value === 'string' ? value.split(',') : value);
             }}
-            SelectProps={{ multiple: true }}
-            helperText={isLoadingUsers ? 'Loading users...' : ' '}
+            slotProps={{
+              select: {
+                multiple: true,
+              },
+            }}
           >
             {editMemberOptions.map((email) => (
               <MenuItem key={email} value={email}>
@@ -317,7 +289,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
-          <Button onClick={handleSaveEdit} variant="contained" disabled={isSaving}>
+          <Button onClick={handleSaveEdit} variant="contained">
             Save
           </Button>
         </DialogActions>
