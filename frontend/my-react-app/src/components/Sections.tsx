@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Dialog,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
@@ -11,6 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { DeleteOutline } from "@mui/icons-material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import CalendarEventPanel from "./CalendarEventPanel";
@@ -43,8 +45,8 @@ type SectionProps = {
   calendarRefreshTrigger?: number;
 };
 
-const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"];
-const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v"];
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "jfif", "bmp", "svg"];
+const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v", "avi", "wmv", "flv", "mkv"];
 
 
 const Sections: React.FC<SectionProps> = ({
@@ -56,7 +58,7 @@ const Sections: React.FC<SectionProps> = ({
 }) => {
   const [assets, setAssets] = useState<SharedAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>("calendar");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null);
@@ -118,7 +120,7 @@ const Sections: React.FC<SectionProps> = ({
       }
 
       const data = (await response.json()) as AssetCategory[];
-      setCategories(data.map((category) => category.name));
+      setCategories(data.sort((left, right) => left.name.localeCompare(right.name)));
     } catch {
       setCategories([]);
     }
@@ -177,7 +179,7 @@ const Sections: React.FC<SectionProps> = ({
   useEffect(() => {
     if (selectedSection === "calendar") return;
 
-    if (!categories.includes(selectedSection)) {
+    if (!categories.some((category) => category.name === selectedSection)) {
       setSelectedSection("calendar");
     }
   }, [categories, selectedSection]);
@@ -212,14 +214,37 @@ const Sections: React.FC<SectionProps> = ({
 
       const createdCategory = (await response.json()) as AssetCategory;
       setCategories((prev) => {
-        if (prev.includes(createdCategory.name)) return prev;
-        return [...prev, createdCategory.name].sort((left, right) => left.localeCompare(right));
+        if (prev.some((category) => category.id === createdCategory.id)) return prev;
+        return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name));
       });
       setSelectedSection(createdCategory.name);
       setNewCategoryName("");
       fetchCategories();
     } catch {
       setError("Failed to create category.");
+    }
+  };
+
+  const deleteCategory = async (category: AssetCategory) => {
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/assets/categories/${category.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete category");
+      }
+
+      setCategories((prev) => prev.filter((item) => item.id !== category.id));
+      if (selectedSection === category.name) {
+        setSelectedSection("calendar");
+      }
+      await fetchAssets();
+      await fetchCategories();
+    } catch {
+      setError("Failed to delete category.");
     }
   };
 
@@ -351,25 +376,32 @@ const Sections: React.FC<SectionProps> = ({
           </ListItem>
 
           {categories.map((category) => (
-            <ListItem key={category} disablePadding>
+            <ListItem key={category.id} disablePadding>
               <ListItemButton
-                selected={selectedSection === category}
-                onClick={() => setSelectedSection(category)}
+                selected={selectedSection === category.name}
+                onClick={() => setSelectedSection(category.name)}
                 sx={{ borderRadius: 3 }}
               >
                 <ListItemText
-                  primary={category}
+                  primary={category.name}
                   slotProps={{
                     primary: {
                       sx: {
                         color: "#f7f7f7",
                         fontSize: 15,
-                        fontWeight: selectedSection === category ? "bold" : "normal",
+                        fontWeight: selectedSection === category.name ? "bold" : "normal",
                       },
                     },
                   }}
                 />
               </ListItemButton>
+              <IconButton
+                onClick={() => deleteCategory(category)}
+                aria-label={`Delete ${category.name}`}
+                sx={{ color: "#ff8a80" }}
+              >
+                <DeleteOutline fontSize="small" />
+              </IconButton>
             </ListItem>
           ))}
         </List>

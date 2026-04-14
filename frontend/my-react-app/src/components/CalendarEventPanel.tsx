@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add, DeleteOutline } from "@mui/icons-material";
 import { Badge, Box, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
@@ -95,6 +95,26 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   const handleDateChange = (newDate: Dayjs | null) => {
     if (newDate) {
       setSelectedDate(newDate);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/calendar-events/${eventId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete calendar event");
+      }
+
+      setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId));
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      setError("Failed to delete calendar event");
     }
   };
 
@@ -217,6 +237,13 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
                       </>
                     }
                   />
+                  <IconButton
+                    onClick={() => handleDeleteEvent(event.id)}
+                    aria-label={`Delete ${event.title}`}
+                    sx={{ color: "#ff8a80" }}
+                  >
+                    <DeleteOutline fontSize="small" />
+                  </IconButton>
                 </ListItem>
               ))}
             </List>

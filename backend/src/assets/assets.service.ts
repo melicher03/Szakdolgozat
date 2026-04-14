@@ -92,6 +92,29 @@ export class AssetsService {
     return savedCategory
   }
 
+  async removeCategory(id: string): Promise<void> {
+    const categoryId = Number(id)
+    const category = await this.assetCategoriesRepository.findOne({
+      where: { id: categoryId },
+    })
+
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} was not found`)
+    }
+
+    await this.assetsRepository.update(
+      {
+        familyGroupId: category.familyGroupId,
+        categoryName: category.name,
+      },
+      { categoryName: null },
+    )
+
+    await this.assetCategoriesRepository.remove(category)
+
+    this.messagesGateway.server.to(String(category.familyGroupId)).emit('asset-category-updated')
+  }
+
   async createFileAsset(dto: CreateFileAssetDto): Promise<SharedAsset> {
     const familyGroup =
       await this.familyGroupsRepository.findOne({ where: { id: dto.familyGroupId } })

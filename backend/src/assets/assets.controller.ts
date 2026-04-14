@@ -31,6 +31,11 @@ export class AssetsController {
     return this.assetsService.createCategory(dto)
   }
 
+  @Delete('categories/:id')
+  removeCategory(@Param('id') id: string) {
+    return this.assetsService.removeCategory(id)
+  }
+
   @Post('file')
   createFileAsset(@Body() dto: CreateFileAssetDto) {
     return this.assetsService.createFileAsset(dto)
