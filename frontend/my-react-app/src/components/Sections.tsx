@@ -11,42 +11,42 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { DeleteOutline } from "@mui/icons-material";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import CalendarEventPanel from "./CalendarEventPanel";
-import { cardStyle } from "./MainPage";
-import { CalendarIcon } from "@mui/x-date-pickers";
+} from "@mui/material"
+import { DeleteOutline } from "@mui/icons-material"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { io, Socket } from "socket.io-client"
+import CalendarEventPanel from "./CalendarEventPanel"
+import { cardStyle } from "./MainPage"
+import { CalendarIcon } from "@mui/x-date-pickers"
 
 type SharedAsset = {
-  id: string;
-  type: "FILE" | "URL";
-  title?: string;
-  url: string;
-  fileSize?: number;
-  categoryName?: string | null;
-  familyGroupId: number;
-  uploadedBy: string;
-  createdAt: string;
-};
+  id: string
+  type: "FILE" | "URL"
+  title?: string
+  url: string
+  fileSize?: number
+  categoryName?: string | null
+  familyGroupId: number
+  uploadedBy: string
+  createdAt: string
+}
 
 type AssetCategory = {
-  id: number;
-  familyGroupId: number;
-  name: string;
-};
+  id: number
+  familyGroupId: number
+  name: string
+}
 
 type SectionProps = {
-  apiBaseUrl: string;
-  selectedGroupId: number | null;
-  onCreateCalendarEvent: () => void;
-  uploadRefreshTrigger?: number;
-  calendarRefreshTrigger?: number;
-};
+  apiBaseUrl: string
+  selectedGroupId: number | null
+  onCreateCalendarEvent: () => void
+  uploadRefreshTrigger?: number
+  calendarRefreshTrigger?: number
+}
 
-const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "jfif", "bmp", "svg"];
-const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v", "avi", "wmv", "flv", "mkv"];
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "jfif", "bmp", "svg"]
+const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v", "avi", "wmv", "flv", "mkv"]
 
 
 const Sections: React.FC<SectionProps> = ({
@@ -56,86 +56,86 @@ const Sections: React.FC<SectionProps> = ({
   uploadRefreshTrigger,
   calendarRefreshTrigger,
 }) => {
-  const [assets, setAssets] = useState<SharedAsset[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<AssetCategory[]>([]);
-  const [selectedSection, setSelectedSection] = useState<string>("calendar");
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null);
+  const [assets, setAssets] = useState<SharedAsset[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [categories, setCategories] = useState<AssetCategory[]>([])
+  const [selectedSection, setSelectedSection] = useState<string>("calendar")
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null)
   
   const getFileExtension = (value: string): string => {
-    const url = new URL(value);
-    const pathname = url.pathname;
-    const lastDot = pathname.lastIndexOf(".");
-    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : "";
-  };
+    const url = new URL(value)
+    const pathname = url.pathname
+    const lastDot = pathname.lastIndexOf(".")
+    return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : ""
+  }
   
   const getFileType = (value: string): "image" | "video" | null => {
-    const extension = getFileExtension(value);
+    const extension = getFileExtension(value)
   
     if (IMAGE_EXTENSIONS.includes(extension)) {
-      return "image";
+      return "image"
     }
   
     if (VIDEO_EXTENSIONS.includes(extension)) {
-      return "video";
+      return "video"
     }
   
-    return null;
-  };
+    return null
+  }
   
   const fetchAssets = useCallback(async () => {
     if (!selectedGroupId) {
-      setAssets([]);
-      return;
+      setAssets([])
+      return
     }
 
-    setError(null);
+    setError(null)
     try {
-      const response = await fetch(`${apiBaseUrl}/assets?familyGroupId=${selectedGroupId}`);
+      const response = await fetch(`${apiBaseUrl}/assets?familyGroupId=${selectedGroupId}`)
       if (!response.ok) {
-        throw new Error("Failed to load assets");
+        throw new Error("Failed to load assets")
       }
 
-      const data = (await response.json()) as SharedAsset[];
-      setAssets(data);
+      const data = (await response.json()) as SharedAsset[]
+      setAssets(data)
     } catch {
-      setError("Failed to load group assets.");
+      setError("Failed to load group assets.")
     }
-  }, [apiBaseUrl, selectedGroupId]);
+  }, [apiBaseUrl, selectedGroupId])
 
   const fetchCategories = useCallback(async () => {
     if (!selectedGroupId) {
-      setCategories([]);
-      return;
+      setCategories([])
+      return
     }
 
     try {
       const response = await fetch(
         `${apiBaseUrl}/assets/categories?familyGroupId=${selectedGroupId}`,
-      );
+      )
 
       if (!response.ok) {
-        throw new Error("Failed to load categories");
+        throw new Error("Failed to load categories")
       }
 
-      const data = (await response.json()) as AssetCategory[];
-      setCategories(data.sort((left, right) => left.name.localeCompare(right.name)));
+      const data = (await response.json()) as AssetCategory[]
+      setCategories(data.sort((left, right) => left.name.localeCompare(right.name)))
     } catch {
-      setCategories([]);
+      setCategories([])
     }
-  }, [apiBaseUrl, selectedGroupId]);
+  }, [apiBaseUrl, selectedGroupId])
 
   useEffect(() => {
-    fetchAssets();
-    fetchCategories();
-  }, [fetchAssets, fetchCategories]);
+    fetchAssets()
+    fetchCategories()
+  }, [fetchAssets, fetchCategories])
 
   useEffect(() => {
-    let socket: Socket | null = null;
+    let socket: Socket | null = null
 
     if (!selectedGroupId) {
-      return;
+      return
     }
 
     socket = io("http://localhost:3000", {
@@ -143,58 +143,58 @@ const Sections: React.FC<SectionProps> = ({
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5,
-    });
+    })
 
     socket.on("connect", () => {
-      socket?.emit("join-group", { familyGroupId: String(selectedGroupId) });
-    });
+      socket?.emit("join-group", { familyGroupId: String(selectedGroupId) })
+    })
 
     socket.on("category-created", () => {
-      fetchCategories();
-    });
+      fetchCategories()
+    })
 
     socket.on("asset-category-updated", () => {
-      fetchAssets();
-      fetchCategories();
-    });
+      fetchAssets()
+      fetchCategories()
+    })
 
     socket.on("asset-created", () => {
-      fetchAssets();
-    });
+      fetchAssets()
+    })
 
     return () => {
-      socket?.emit("leave-group", { familyGroupId: String(selectedGroupId) });
-      socket?.disconnect();
-    };
-  }, [fetchAssets, fetchCategories, selectedGroupId]);
+      socket?.emit("leave-group", { familyGroupId: String(selectedGroupId) })
+      socket?.disconnect()
+    }
+  }, [fetchAssets, fetchCategories, selectedGroupId])
 
   useEffect(() => {
     if (!selectedGroupId) {
-      setCategories([]);
-      setSelectedSection("calendar");
-      return;
+      setCategories([])
+      setSelectedSection("calendar")
+      return
     }
-  }, [selectedGroupId]);
+  }, [selectedGroupId])
 
   useEffect(() => {
-    if (selectedSection === "calendar") return;
+    if (selectedSection === "calendar") return
 
     if (!categories.some((category) => category.name === selectedSection)) {
-      setSelectedSection("calendar");
+      setSelectedSection("calendar")
     }
-  }, [categories, selectedSection]);
+  }, [categories, selectedSection])
   useEffect(() => {
     if (uploadRefreshTrigger !== undefined && uploadRefreshTrigger > 0) {
-      void fetchAssets();
+      void fetchAssets()
     }
-  }, [uploadRefreshTrigger, fetchAssets]);
+  }, [uploadRefreshTrigger, fetchAssets])
 
   
   const addCategory = async () => {
-    if (!selectedGroupId) return;
+    if (!selectedGroupId) return
 
-    const trimmed = newCategoryName.trim();
-    if (!trimmed) return;
+    const trimmed = newCategoryName.trim()
+    if (!trimmed) return
 
     try {
       const response = await fetch(`${apiBaseUrl}/assets/categories`, {
@@ -206,65 +206,65 @@ const Sections: React.FC<SectionProps> = ({
           familyGroupId: selectedGroupId,
           name: trimmed,
         }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to create category");
+        throw new Error("Failed to create category")
       }
 
-      const createdCategory = (await response.json()) as AssetCategory;
+      const createdCategory = (await response.json()) as AssetCategory
       setCategories((prev) => {
-        if (prev.some((category) => category.id === createdCategory.id)) return prev;
-        return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name));
-      });
-      setSelectedSection(createdCategory.name);
-      setNewCategoryName("");
-      fetchCategories();
+        if (prev.some((category) => category.id === createdCategory.id)) return prev
+        return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name))
+      })
+      setSelectedSection(createdCategory.name)
+      setNewCategoryName("")
+      fetchCategories()
     } catch {
-      setError("Failed to create category.");
+      setError("Failed to create category.")
     }
-  };
+  }
 
   const deleteCategory = async (category: AssetCategory) => {
-    setError(null);
+    setError(null)
 
     try {
       const response = await fetch(`${apiBaseUrl}/assets/categories/${category.id}`, {
         method: "DELETE",
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to delete category");
+        throw new Error("Failed to delete category")
       }
 
-      setCategories((prev) => prev.filter((item) => item.id !== category.id));
+      setCategories((prev) => prev.filter((item) => item.id !== category.id))
       if (selectedSection === category.name) {
-        setSelectedSection("calendar");
+        setSelectedSection("calendar")
       }
-      await fetchAssets();
-      await fetchCategories();
+      await fetchAssets()
+      await fetchCategories()
     } catch {
-      setError("Failed to delete category.");
+      setError("Failed to delete category.")
     }
-  };
+  }
 
   const filteredAssets = useMemo(() => {
-    if (selectedSection === "calendar") return [];
-    return assets.filter((asset) => (asset.categoryName ?? "") === selectedSection);
-  }, [assets, selectedSection]);
+    if (selectedSection === "calendar") return []
+    return assets.filter((asset) => (asset.categoryName ?? "") === selectedSection)
+  }, [assets, selectedSection])
 
   const fileAssets = useMemo(
     () => filteredAssets.filter((asset) => asset.type === "FILE"),
     [filteredAssets],
-  );
+  )
 
   const urlAssets = useMemo(
     () => filteredAssets.filter((asset) => asset.type === "URL"),
     [filteredAssets],
-  );
+  )
 
   const renderMediaPreview = (asset: SharedAsset) => {
-    const mediaKind = getFileType(asset.url);
+    const mediaKind = getFileType(asset.url)
 
     if (mediaKind === "image") {
       return (
@@ -288,7 +288,7 @@ const Sections: React.FC<SectionProps> = ({
             })
           }
         />
-      );
+      )
     }
 
     if (mediaKind === "video") {
@@ -305,11 +305,11 @@ const Sections: React.FC<SectionProps> = ({
             mb: 1,
           }}
         />
-      );
+      )
     }
 
-    return null;
-  };
+    return null
+  }
 
   return (
     <Card sx={cardStyle}>
@@ -411,7 +411,7 @@ const Sections: React.FC<SectionProps> = ({
             onCreateCalendarEvent={onCreateCalendarEvent}
             selectedGroupId={selectedGroupId}
             apiBaseUrl={apiBaseUrl}
-            refreshTrigger={(uploadRefreshTrigger ?? 0) + (calendarRefreshTrigger ?? 0)}
+            refreshTrigger={calendarRefreshTrigger ?? 0 }
           />
         ) : (
           <>
@@ -524,7 +524,7 @@ const Sections: React.FC<SectionProps> = ({
         )}
       </Dialog>
     </Card>
-  );
-};
+  )
+}
 
-export default Sections;
+export default Sections

@@ -17,8 +17,7 @@ export class UsersService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource
   ) {
-    const supabaseUrl =
-      this.configService.get<string>('SUPABASE_URL')
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
     const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
 
     this.supabase =
@@ -26,20 +25,17 @@ export class UsersService {
   }
 
   private async findUsersFromAuthSchema(): Promise<UserSuggestion[]> {
-    const rows = (await this.dataSource.query(
+    const users = await this.dataSource.query(
       `
         select email
         from auth.users
       `,
-    )) as Array<{ email: string | null }>
-
-    return this.filterAndFormatUsers(
-      rows.map((row) => row.email ?? '')
     )
+
+    return this.filterAndFormatUsers(users.map((user: { email: string }) => user.email ?? ''))
   }
 
   private filterAndFormatUsers(candidates: string[]): UserSuggestion[] {
-
     return Array.from(new Set(candidates.map((value) => value.trim().toLowerCase())))
       .filter((value) => value.length > 0)
       .filter((value) => EMAIL_PATTERN.test(value))
@@ -56,8 +52,7 @@ export class UsersService {
         if (fromAuthSchema.length > 0) {
           return fromAuthSchema
         }
-      } catch {
-      }
+      } catch {}
       return []
     }
 

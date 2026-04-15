@@ -1,24 +1,24 @@
 import { Logout } from "@mui/icons-material"
 import { Box, Button, Card, Container, Grid, Typography } from "@mui/material"
-import { useCallback, useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog";
-import CreateCalendarEventDialog from "./CreateCalendarEventDialog";
-import Chat from "./Chat";
-import { supabase } from "../services/supabaseClient";
-import GroupFilesPanel from "./Sections.tsx";
-import FamilyGroupsPanel from "./FamilyGroupsPanel.tsx";
+import { useCallback, useEffect, useState } from "react"
+import type { User } from "@supabase/supabase-js"
+import CreateFamilyGroupDialog from "./CreateFamilyGroupDialog"
+import CreateCalendarEventDialog from "./CreateCalendarEventDialog"
+import Chat from "./Chat"
+import { supabase } from "../services/supabaseClient"
+import GroupFilesPanel from "./Sections.tsx"
+import FamilyGroupsPanel from "./FamilyGroupsPanel.tsx"
 
 type FamilyGroup = {
-    id: number;
-    name: string;
-    members: string[];
-    ownerId: string;
-};
+    id: number
+    name: string
+    members: string[]
+    ownerId: string
+}
 
 type MainPageProps = {
-    currentUser: User;
-};
+    currentUser: User
+}
 
 export const cardStyle = {
         bgcolor: '#141620',
@@ -27,18 +27,18 @@ export const cardStyle = {
         borderColor: '#292d3b',
         p: 2,
         color: "#f7f7f7",
-    };
+    }
 
 const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
     const handleLogout = async () => {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut()
         if (error) {
-            console.error('Logout failed:', error.message);
+            console.error('Logout failed:', error.message)
         }
     }
 
-    const [openCreateFamilyGroup, setOpenCreateFamilyGroup] = useState(false);
-    const [openCreateCalendarEvent, setOpenCreateCalendarEvent] = useState(false);
+    const [openCreateFamilyGroup, setOpenCreateFamilyGroup] = useState(false)
+    const [openCreateCalendarEvent, setOpenCreateCalendarEvent] = useState(false)
 
     const handleCloseCreateFamilyGroup = () => {
         setOpenCreateFamilyGroup(false)
@@ -62,9 +62,9 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
     }, [])
 
     const fetchGroups = useCallback(async () => {
-        const response = await fetch("http://localhost:3000/family-groups");
-        const data = await response.json();
-        setFamilyGroups(data);
+        const response = await fetch("http://localhost:3000/family-groups")
+        const data = await response.json()
+        setFamilyGroups(data)
     }, [])
 
     const currentUserId = (currentUser.email ?? currentUser.id).trim().toLowerCase()
@@ -76,7 +76,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
 
     useEffect(() => {
         if (currentUser) {
-            void fetchGroups();
+            void fetchGroups()
         }
     }, [currentUser, fetchGroups, openCreateFamilyGroup])
 
@@ -91,8 +91,8 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
         }
     }, [visibleFamilyGroups, selectedGroupId])
 
-    const handleClickOpenCreateFamilyGroup = () => setOpenCreateFamilyGroup(true);
-    const handleClickOpenCreateCalendarEvent = () => setOpenCreateCalendarEvent(true);
+    const handleClickOpenCreateFamilyGroup = () => setOpenCreateFamilyGroup(true)
+    const handleClickOpenCreateCalendarEvent = () => setOpenCreateCalendarEvent(true)
 
     return (
         <Box
@@ -189,7 +189,7 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                 </Grid>
             </Container>
         </Box>
-    );
+    )
 }
 
 export default MainSite

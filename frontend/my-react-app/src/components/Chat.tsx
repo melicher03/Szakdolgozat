@@ -1,4 +1,4 @@
-import { AttachFile, InsertLink, Send } from '@mui/icons-material';
+import { AttachFile, InsertLink, Send } from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -10,32 +10,32 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { supabase } from '../services/supabaseClient';
-import { cardStyle } from './MainPage';
+} from '@mui/material'
+import { useCallback, useEffect, useState } from 'react'
+import { io, Socket } from 'socket.io-client'
+import { supabase } from '../services/supabaseClient'
+import { cardStyle } from './MainPage'
 
 interface Message {
-  id?: string;
-  text: string;
-  senderId: string;
-  senderName?: string;
-  createdAt?: string;
+  id?: string
+  text: string
+  senderId: string
+  senderName?: string
+  createdAt?: string
 }
 
 interface ChatComponentProps {
-  familyGroupId: string | null;
-  familyGroupName: string;
-  userId: string;
-  userName: string;
-  onUploadSuccess?: () => void;
+  familyGroupId: string | null
+  familyGroupName: string
+  userId: string
+  userName: string
+  onUploadSuccess?: () => void
 }
 
 interface AssetCategory {
-  id: number;
-  familyGroupId: number;
-  name: string;
+  id: number
+  familyGroupId: number
+  name: string
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
@@ -45,116 +45,116 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   userName,
   onUploadSuccess,
 }) => {
-  const [currentSocket, setCurrentSocket] = useState<Socket | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
-  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
-  const [linkUrl, setLinkUrl] = useState('');
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [selectedFile, setselectedFile] = useState<File | null>(null);
-  const [categories, setCategories] = useState<AssetCategory[]>([]);
-  const [result, setResult] = useState<string | null>(null);
-  const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? 'media';
+  const [currentSocket, setCurrentSocket] = useState<Socket | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+  const [title, setTitle] = useState('')
+  const [category, setCategory] = useState('')
+  const [selectedFile, setselectedFile] = useState<File | null>(null)
+  const [categories, setCategories] = useState<AssetCategory[]>([])
+  const [result, setResult] = useState<string | null>(null)
+  const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? 'media'
 
   const loadCategories = useCallback(async () => {
     if (!familyGroupId) {
-      setCategories([]);
-      setCategory('');
-      return;
+      setCategories([])
+      setCategory('')
+      return
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`);
+      const response = await fetch(`http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`)
       if (!response.ok) {
-        throw new Error('Failed to load categories');
+        throw new Error('Failed to load categories')
       }
 
-      const data = (await response.json()) as AssetCategory[];
-      setCategories(data);
+      const data = (await response.json()) as AssetCategory[]
+      setCategories(data)
     } catch {
-      setCategories([]);
+      setCategories([])
     }
-  }, [familyGroupId]);
+  }, [familyGroupId])
 
   const scrollToBottom = () => {
-    const container = document.getElementById('chat-scroll-container');
-    if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  };
+    const container = document.getElementById('chat-scroll-container')
+    if (!container) return
+    container.scrollTop = container.scrollHeight
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+    loadCategories()
+  }, [loadCategories])
 
   useEffect(() => {
     if (!isLinkDialogOpen && !isFileDialogOpen) {
-      return;
+      return
     }
 
-    loadCategories();
-  }, [isFileDialogOpen, isLinkDialogOpen, loadCategories]);
+    loadCategories()
+  }, [isFileDialogOpen, isLinkDialogOpen, loadCategories])
 
   useEffect(() => {
-    if (!isLinkDialogOpen && !isFileDialogOpen) return;
+    if (!isLinkDialogOpen && !isFileDialogOpen) return
 
     if (categories.length === 0) {
-      setCategory('');
-      return;
+      setCategory('')
+      return
     }
 
     setCategory((current) =>
       categories.some((category) => category.name === current) ? current : categories[0].name,
-    );
-  }, [categories, isLinkDialogOpen, isFileDialogOpen]);
+    )
+  }, [categories, isLinkDialogOpen, isFileDialogOpen])
 
   useEffect(() => {
-    let socket: Socket | null = null;
-    let isActive = true;
+    let socket: Socket | null = null
+    let isActive = true
 
     const loadHistoryAndConnect = async () => {
       if (familyGroupId === null) {
-        setMessages([]);
-        setIsConnected(false);
-        setCurrentSocket(null);
-        return;
+        setMessages([])
+        setIsConnected(false)
+        setCurrentSocket(null)
+        return
       }
 
       try {
-        const response = await fetch(`http://localhost:3000/messages?familyGroupId=${familyGroupId}`);
+        const response = await fetch(`http://localhost:3000/messages?familyGroupId=${familyGroupId}`)
         if (response.ok) {
-          const history = (await response.json()) as Message[];
+          const history = (await response.json()) as Message[]
           if (isActive) {
-            setMessages(history);
+            setMessages(history)
           }
         }
       } catch {
         if (isActive) {
-          setMessages([]);
+          setMessages([])
         }
       }
 
-      if (!isActive) return;
+      if (!isActive) return
 
       socket = io('http://localhost:3000', {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
-      });
-      setCurrentSocket(socket);
+      })
+      setCurrentSocket(socket)
 
       socket.on('connect', () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-        socket?.emit('join-group', { familyGroupId });
-      });
+        console.log('WebSocket connected')
+        setIsConnected(true)
+        socket?.emit('join-group', { familyGroupId })
+      })
 
       socket.on('receive-message', (message: Message) => {
         const normalizedMessage: Message = {
@@ -163,58 +163,58 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           senderId: message.senderId ?? 'unknown',
           senderName: message.senderName,
           createdAt: message.createdAt,
-        };
-        setMessages((prev) => [...prev, normalizedMessage]);
-      });
+        }
+        setMessages((prev) => [...prev, normalizedMessage])
+      })
 
       socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-      });
-    };
+        console.log('WebSocket disconnected')
+        setIsConnected(false)
+      })
+    }
 
-    void loadHistoryAndConnect();
+    void loadHistoryAndConnect()
 
     return () => {
-      isActive = false;
-      socket?.emit('leave-group', { familyGroupId });
-      socket?.disconnect();
-      setCurrentSocket(null);
-    };
-  }, [familyGroupId]);
+      isActive = false
+      socket?.emit('leave-group', { familyGroupId })
+      socket?.disconnect()
+      setCurrentSocket(null)
+    }
+  }, [familyGroupId])
 
   const handleSendMessage = () => {
-    if (!input.trim() || !currentSocket) return;
+    if (!input.trim() || !currentSocket) return
 
     const message = {
       text: input,
       senderId: userId,
       senderName: userName,
       familyGroupId,
-    };
+    }
 
-    currentSocket.emit('send-message', message);
-    setInput('');
-    requestAnimationFrame(() => scrollToBottom());
-  };  
+    currentSocket.emit('send-message', message)
+    setInput('')
+    requestAnimationFrame(() => scrollToBottom())
+  }  
   const closeLinkDialog = () => {
-    setIsLinkDialogOpen(false);
-    setLinkUrl('');
-    setTitle('');
-    setCategory('');
-  };
+    setIsLinkDialogOpen(false)
+    setLinkUrl('')
+    setTitle('')
+    setCategory('')
+  }
 
   const closeFileDialog = () => {
-    setIsFileDialogOpen(false);
-    setselectedFile(null);
-    setTitle('');
-    setCategory('');
-  };
+    setIsFileDialogOpen(false)
+    setselectedFile(null)
+    setTitle('')
+    setCategory('')
+  }
 
   const handleSaveLink = async () => {
     if (!familyGroupId || !linkUrl.trim()) {
-      setResult('Provide a valid URL and select a family group first.');
-      return;
+      setResult('Provide a valid URL and select a family group first.')
+      return
     }
 
     try {
@@ -228,46 +228,46 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           uploadedBy: userName,
           categoryName: category,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const text = await response.text();
-        setResult(`Link upload failed: ${text}`);
-        return;
+        const text = await response.text()
+        setResult(`Link upload failed: ${text}`)
+        return
       }
 
-      setResult('Link uploaded successfully.');
-      closeLinkDialog();
-      onUploadSuccess?.();
+      setResult('Link uploaded successfully.')
+      closeLinkDialog()
+      onUploadSuccess?.()
     } catch (error) {
-      setResult(`Link upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setResult(`Link upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-  };
+  }
 
   const handleUploadFile = async () => {
     if (!familyGroupId || !selectedFile) {
-      setResult('Select a family group and an image/video file first.');
-      return;
+      setResult('Select a family group and an image/video file first.')
+      return
     }
 
     try {
-      const fileExtension = selectedFile.name.split('.').pop() || 'bin';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-      const storagePath = `family-${familyGroupId}/${fileName}`;
+      const fileExtension = selectedFile.name.split('.').pop() || 'bin'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`
+      const storagePath = `family-${familyGroupId}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from(storageBucket)
         .upload(storagePath, selectedFile, {
           contentType: selectedFile.type || undefined,
           upsert: false,
-        });
+        })
 
       if (uploadError) {
-        setResult(`Media upload failed: ${uploadError.message}`);
-        return;
+        setResult(`Media upload failed: ${uploadError.message}`)
+        return
       }
 
-      const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath);
+      const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath)
 
       const response = await fetch('http://localhost:3000/assets/file', {
         method: 'POST',
@@ -281,23 +281,23 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           uploadedBy: userName,
           categoryName: category,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const text = await response.text();
-        setResult(`Media metadata save failed: ${text}`);
-        return;
+        const text = await response.text()
+        setResult(`Media metadata save failed: ${text}`)
+        return
       }
 
-      setResult('Media uploaded successfully.');
-      closeFileDialog();
-      onUploadSuccess?.();
+      setResult('Media uploaded successfully.')
+      closeFileDialog()
+      onUploadSuccess?.()
     } catch (error) {
       setResult(
         `Media upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      )
     }
-  };
+  }
 
   return (
     <Stack
@@ -581,7 +581,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         </Button>
       </Stack>
     </Stack>
-  );
-};
+  )
+}
 
-export default ChatComponent;
+export default ChatComponent

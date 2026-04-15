@@ -1,61 +1,61 @@
 import { Box, Button, TextField, Typography, Alert, CircularProgress } from '@mui/material'
-import { useState } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { useState } from 'react'
+import { supabase } from '../services/supabaseClient'
 
 const LoginPage: React.FC = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [isRegistering, setIsRegistering] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const handleLogin = async () => {
-        setError(null);
-        setLoading(true);
+        setError(null)
+        setLoading(true)
         try {
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
-            });
+            })
 
-            if (signInError) throw signInError;
+            if (signInError) throw signInError
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed');
+            setError(err instanceof Error ? err.message : 'Login failed')
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     const handleRegister = async () => {
-        setError(null);
-        setLoading(true);
+        setError(null)
+        setLoading(true)
         try {
             const { error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
-            });
+            })
 
-            if (signUpError) throw signUpError;
-            setError(null);
-            alert('Registration successful! Please sign in.');
-            setIsRegistering(false);
-            setEmail('');
-            setPassword('');
+            if (signUpError) throw signUpError
+            setError(null)
+            alert('Registration successful! Please sign in.')
+            setIsRegistering(false)
+            setEmail('')
+            setPassword('')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Registration failed');
+            setError(err instanceof Error ? err.message : 'Registration failed')
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (isRegistering) {
-            handleRegister();
+            handleRegister()
         } else {
-            handleLogin();
+            handleLogin()
         }
-    };
+    }
 
     return (
         <Box
@@ -171,8 +171,8 @@ const LoginPage: React.FC = () => {
                         type="button"
                         variant="text"
                         onClick={() => {
-                            setIsRegistering(!isRegistering);
-                            setError(null);
+                            setIsRegistering(!isRegistering)
+                            setError(null)
                         }}
                         disabled={loading}
                         sx={{

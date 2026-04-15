@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
 import { CalendarEventsModule } from './calendar-events/calendar-events.module'
 import { FamilyGroupsModule } from './family-groups/family-groups.module'
-import { TasksModule } from './tasks/tasks.module'
 import { MessagesModule } from './messages/messages.module'
 import { AssetsModule } from './assets/assets.module'
 import { LinksModule } from './links/links.module'
@@ -28,7 +25,6 @@ import { UsersModule } from './users/users.module'
         },
       }),
     }),
-    TasksModule,
     FamilyGroupsModule,
     CalendarEventsModule,
     MessagesModule,
@@ -36,7 +32,5 @@ import { UsersModule } from './users/users.module'
     LinksModule,
     UsersModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

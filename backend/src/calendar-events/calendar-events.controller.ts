@@ -1,8 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common'
 import { CalendarEvent } from '../entities/calendar-event.entity'
 import { CalendarEventsService } from './calendar-events.service'
 import { CreateCalendarEventDto } from './dto/create-calendar-event.dto'
-import { UpdateCalendarEventDto } from './dto/update-calendar-event.dto'
 
 @Controller('calendar-events')
 export class CalendarEventsController {
@@ -16,19 +15,6 @@ export class CalendarEventsController {
   @Get()
   findAll(@Query('familyGroupId') familyGroupId?: string): Promise<CalendarEvent[]> {
     return this.calendarEventsService.findAll(familyGroupId)
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<CalendarEvent> {
-    return this.calendarEventsService.findOne(id)
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateCalendarEventDto: UpdateCalendarEventDto,
-  ): Promise<CalendarEvent> {
-    return this.calendarEventsService.update(id, updateCalendarEventDto)
   }
 
   @Delete(':id')

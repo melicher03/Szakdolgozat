@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from "react"
 import {
     Dialog,
     DialogTitle,
@@ -10,15 +10,15 @@ import {
     Stack,
     Typography,
     type SxProps,
-} from "@mui/material";
-import type { User } from "@supabase/supabase-js";
-import { useEffect } from "react";
+} from "@mui/material"
+import type { User } from "@supabase/supabase-js"
+import { useEffect } from "react"
 
 interface CreateFamilyGroupDialogProps {
-    open: boolean;
-    onClose: () => void;
-    cardStyle?: SxProps;
-    currentUser: User;
+    open: boolean
+    onClose: () => void
+    cardStyle?: SxProps
+    currentUser: User
 }
 
 const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
@@ -32,14 +32,12 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
     const [userOptions, setUserOptions] = useState<string[]>([])
     const [isCreating, setIsCreating] = useState(false)
     const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-    const [usersLoadError, setUsersLoadError] = useState<string | null>(null)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
     const resetForm = () => {
         setName("")
         setMembers([])
         setUserOptions([])
-        setUsersLoadError(null)
         setErrorMessage(null)
     }
 
@@ -131,7 +129,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
         } finally {
             setIsCreating(false)
         }
-    };
+    }
 
     return (
         <Dialog
@@ -204,12 +202,6 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
                         Choose members from the list of registered users.
                     </Typography>
 
-                    {usersLoadError && (
-                        <Typography variant="caption" sx={{ color: "#ff8a80" }}>
-                            {usersLoadError}
-                        </Typography>
-                    )}
-
                     <Typography variant="caption" sx={{ color: "#9fa6c2" }}>
                         The logged-in user is always included automatically as the owner.
                     </Typography>
@@ -231,7 +223,7 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
                 </Button>
             </DialogActions>
         </Dialog>
-    );
-};
+    )
+}
 
-export default CreateFamilyGroupDialog;
+export default CreateFamilyGroupDialog

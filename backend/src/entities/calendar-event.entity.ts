@@ -20,10 +20,10 @@ export class CalendarEvent {
   @Column()
   description?: string
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   startAt: Date
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   endAt: Date
 
   @Column()

@@ -15,7 +15,7 @@ export class CreateCalendarEventDto {
 
   @IsDateString()
   endAt: string
-  
+
   @IsInt()
   familyGroupId: number
 }

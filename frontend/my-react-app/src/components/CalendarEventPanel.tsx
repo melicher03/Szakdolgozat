@@ -1,27 +1,27 @@
-import { Add, DeleteOutline } from "@mui/icons-material";
-import { Badge, Box, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { PickersDay, type PickersDayProps } from '@mui/x-date-pickers/PickersDay';
+import { Add, DeleteOutline } from "@mui/icons-material"
+import { Badge, Box, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material"
+import dayjs, { Dayjs } from "dayjs"
+import { useEffect, useState } from "react"
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { PickersDay, type PickersDayProps } from '@mui/x-date-pickers/PickersDay'
 
 type CalendarEvent = {
-  id: number;
-  title: string;
-  description: string;
-  startAt: string;
-  endAt: string;
-  familyGroupId: string;
-};
+  id: number
+  title: string
+  description: string
+  startAt: string
+  endAt: string
+  familyGroupId: string
+}
 
 type CalendarEventPanelProps = {
-  onCreateCalendarEvent: () => void;
-  selectedGroupId: number | null;
-  apiBaseUrl?: string;
-  refreshTrigger?: number;
-};
+  onCreateCalendarEvent: () => void
+  selectedGroupId: number | null
+  apiBaseUrl?: string
+  refreshTrigger?: number
+}
 
 const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   onCreateCalendarEvent,
@@ -29,98 +29,98 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   apiBaseUrl = "http://localhost:3000",
   refreshTrigger = 0,
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   const getEventDays = (startAt: string, endAt: string) => {
-    const start = dayjs(startAt).startOf("day");
-    const end = dayjs(endAt).startOf("day");
-    const days: string[] = [];
+    const start = dayjs(startAt).startOf("day")
+    const end = dayjs(endAt).startOf("day")
+    const days: string[] = []
 
     if (end.isBefore(start)) {
-      return;
+      return
     }
 
-    let current = start;
+    let current = start
     while (current.isBefore(end) || current.isSame(end, "day")) {
-      days.push(current.format("YYYY-MM-DD"));
-      current = current.add(1, "day");
+      days.push(current.format("YYYY-MM-DD"))
+      current = current.add(1, "day")
     }
 
-    return days;
-  };
+    return days
+  }
 
   // Fetch calendar events
   useEffect(() => {
     const fetchEvents = async () => {
       if (!selectedGroupId) {
-        setEvents([]);
-        return;
+        setEvents([])
+        return
       }
 
-      setError(null);
+      setError(null)
       try {
         const response = await fetch(
           `${apiBaseUrl}/calendar-events?familyGroupId=${selectedGroupId}`
-        );
+        )
         if (!response.ok) {
-          throw new Error("Failed to load calendar events");
+          throw new Error("Failed to load calendar events")
         }
-        const data = (await response.json()) as CalendarEvent[];
-        setEvents(data);
+        const data = (await response.json()) as CalendarEvent[]
+        setEvents(data)
       } catch (err) {
-        console.error("Error loading events:", err);
-        setError("Failed to load calendar events");
+        console.error("Error loading events:", err)
+        setError("Failed to load calendar events")
       }
-    };
+    }
 
-    fetchEvents();
-  }, [selectedGroupId, apiBaseUrl, refreshTrigger]);
+    fetchEvents()
+  }, [selectedGroupId, apiBaseUrl, refreshTrigger])
 
   // Get events for selected date
   const eventDays = new Set(
     events.flatMap((event) => getEventDays(event.startAt, event.endAt))
-  );
+  )
 
   const eventsForSelectedDate = events.filter((event) => {
-    const selectedDateStart = selectedDate.startOf("day");
-    const selectedDateEnd = selectedDate.endOf("day");
-    const eventStart = dayjs(event.startAt);
-    const eventEnd = dayjs(event.endAt);
+    const selectedDateStart = selectedDate.startOf("day")
+    const selectedDateEnd = selectedDate.endOf("day")
+    const eventStart = dayjs(event.startAt)
+    const eventEnd = dayjs(event.endAt)
 
-    return eventStart.isBefore(selectedDateEnd) && eventEnd.isAfter(selectedDateStart);
-  });
+    return eventStart.isBefore(selectedDateEnd) && eventEnd.isAfter(selectedDateStart)
+  })
 
   const handleDateChange = (newDate: Dayjs | null) => {
     if (newDate) {
-      setSelectedDate(newDate);
+      setSelectedDate(newDate)
     }
-  };
+  }
 
   const handleDeleteEvent = async (eventId: number) => {
 
-    setError(null);
+    setError(null)
 
     try {
       const response = await fetch(`${apiBaseUrl}/calendar-events/${eventId}`, {
         method: "DELETE",
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to delete calendar event");
+        throw new Error("Failed to delete calendar event")
       }
 
-      setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId));
+      setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId))
     } catch (err) {
-      console.error("Error deleting event:", err);
-      setError("Failed to delete calendar event");
+      console.error("Error deleting event:", err)
+      setError("Failed to delete calendar event")
     }
-  };
+  }
 
   const Day = (props: PickersDayProps) => {
-    const { day, outsideCurrentMonth, ...other } = props;
-    const hasEvent = eventDays.has(day.format("YYYY-MM-DD"));
+    const { day, outsideCurrentMonth, ...other } = props
+    const hasEvent = eventDays.has(day.format("YYYY-MM-DD"))
 
     return (
       <Badge
@@ -140,8 +140,8 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
           outsideCurrentMonth={outsideCurrentMonth}
         />
       </Badge>
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -251,7 +251,7 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
         </Box>
       </Stack>
     </>
-  );
-};
+  )
+}
 
 export default CalendarEventPanel

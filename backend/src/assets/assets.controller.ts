@@ -40,9 +40,4 @@ export class AssetsController {
   createFileAsset(@Body() dto: CreateFileAssetDto) {
     return this.assetsService.createFileAsset(dto)
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.assetsService.remove(id)
-  }
 }

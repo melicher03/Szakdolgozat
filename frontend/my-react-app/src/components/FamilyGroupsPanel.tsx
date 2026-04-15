@@ -1,4 +1,4 @@
-import { Delete, Edit, Groups } from "@mui/icons-material";
+import { Delete, Edit, Groups } from "@mui/icons-material"
 import {
   Box,
   Button,
@@ -15,24 +15,24 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
-import { cardStyle } from "./MainPage";
+} from "@mui/material"
+import { useEffect, useMemo, useState } from "react"
+import { cardStyle } from "./MainPage"
 
 type FamilyGroup = {
-  id: number;
-  name: string;
-  members: string[];
-  ownerId: string;
-};
+  id: number
+  name: string
+  members: string[]
+  ownerId: string
+}
 
 type FamilyGroupsPanelProps = {
-  familyGroups: FamilyGroup[] | null;
-  selectedGroupId: number | null;
-  onSelectGroup: (id: number) => void;
-  onCreateFamilyGroup: () => void;
-  onGroupsChanged: () => void;
-};
+  familyGroups: FamilyGroup[] | null
+  selectedGroupId: number | null
+  onSelectGroup: (id: number) => void
+  onCreateFamilyGroup: () => void
+  onGroupsChanged: () => void
+}
 
 const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
   familyGroups,
@@ -41,87 +41,87 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
   onCreateFamilyGroup,
   onGroupsChanged,
 }) => {
-  const [activeGroup, setActiveGroup] = useState<FamilyGroup | null>(null);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editMembers, setEditMembers] = useState<string[]>([]);
-  const [userOptions, setUserOptions] = useState<string[]>([]);
-  const [editError, setEditError] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<FamilyGroup | null>(null)
+  const [openEditDialog, setOpenEditDialog] = useState(false)
+  const [editName, setEditName] = useState("")
+  const [editMembers, setEditMembers] = useState<string[]>([])
+  const [userOptions, setUserOptions] = useState<string[]>([])
+  const [editError, setEditError] = useState<string | null>(null)
 
   const editMemberOptions = useMemo(() => {
     const source = [
       ...userOptions,
       ...(activeGroup?.members ?? []),
       activeGroup?.ownerId ?? "",
-    ];
+    ]
 
     return [...new Set(source.map((value) => value.trim().toLowerCase())
-      .filter((value) => value.length > 0),)].sort((left, right) => left.localeCompare(right));
+      .filter((value) => value.length > 0),)].sort((left, right) => left.localeCompare(right))
 
-  }, [activeGroup?.members, activeGroup?.ownerId, userOptions]);
+  }, [activeGroup?.members, activeGroup?.ownerId, userOptions])
 
   useEffect(() => {
     const loadUsers = async () => {
-      if (!openEditDialog) return;
+      if (!openEditDialog) return
 
       try {
-        const response = await fetch("http://localhost:3000/users");
+        const response = await fetch("http://localhost:3000/users")
         if (!response.ok) {
-          throw new Error("Failed to load users");
+          throw new Error("Failed to load users")
         }
 
-        const data = (await response.json()) as Array<{ id: string; email: string }>;
+        const data = (await response.json()) as Array<{ id: string; email: string }>
         const nextUsers = Array.from(
           new Set(
             data
               .map((user) => user.email?.trim().toLowerCase())
               .filter((email): email is string => Boolean(email)),
           ),
-        );
-        setUserOptions(nextUsers);
+        )
+        setUserOptions(nextUsers)
       } catch {
-        setUserOptions([]);
+        setUserOptions([])
       }
-    };
+    }
 
-    loadUsers();
-  }, [openEditDialog]);
+    loadUsers()
+  }, [openEditDialog])
 
   const handleOpenEdit = (group: FamilyGroup) => {
-    setActiveGroup(group);
-    setEditName(group.name);
-    setEditMembers(group.members.map((member) => member.trim().toLowerCase()));
-    setEditError(null);
-    setOpenEditDialog(true);
-  };
+    setActiveGroup(group)
+    setEditName(group.name)
+    setEditMembers(group.members.map((member) => member.trim().toLowerCase()))
+    setEditError(null)
+    setOpenEditDialog(true)
+  }
 
   const handleDelete = async (group: FamilyGroup) => {
 
     try {
       const response = await fetch(`http://localhost:3000/family-groups/${group.id}`, {
         method: "DELETE",
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to delete group");
+        throw new Error("Failed to delete group")
       }
 
-      onGroupsChanged();
+      onGroupsChanged()
     } catch {
-      setEditError("Could not delete the family group.");
+      setEditError("Could not delete the family group.")
     }
-  };
+  }
 
   const handleSaveEdit = async () => {
-    if (!activeGroup) return;
+    if (!activeGroup) return
 
-    const trimmedName = editName.trim();
+    const trimmedName = editName.trim()
     if (!trimmedName) {
-      setEditError("Group name is required.");
-      return;
+      setEditError("Group name is required.")
+      return
     }
 
-    setEditError(null);
+    setEditError(null)
 
     try {
       const response = await fetch(`http://localhost:3000/family-groups/${activeGroup.id}`, {
@@ -133,18 +133,18 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
           name: trimmedName,
           members: editMembers,
         }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to update group");
+        throw new Error("Failed to update group")
       }
 
-      setOpenEditDialog(false);
-      onGroupsChanged();
+      setOpenEditDialog(false)
+      onGroupsChanged()
     } catch {
-      setEditError("Could not update the family group.");
+      setEditError("Could not update the family group.")
     }
-  };
+  }
 
   return (
     <Box>
@@ -195,7 +195,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
                   <Stack direction="row" spacing={0.5}>
                     <IconButton
                       onClick={() => {
-                        handleOpenEdit(group);
+                        handleOpenEdit(group)
                       }}
                       sx={{ color: '#9fa6c2' }}
                     >
@@ -203,7 +203,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
                     </IconButton>
                     <IconButton
                       onClick={() => {
-                        handleDelete(group);
+                        handleDelete(group)
                       }}
                       sx={{ color: '#ff8a80' }}
                     >
@@ -269,8 +269,8 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
             fullWidth
             value={editMembers}
             onChange={(event) => {
-              const value = event.target.value;
-              setEditMembers(typeof value === 'string' ? value.split(',') : value);
+              const value = event.target.value
+              setEditMembers(typeof value === 'string' ? value.split(',') : value)
             }}
             slotProps={{
               select: {

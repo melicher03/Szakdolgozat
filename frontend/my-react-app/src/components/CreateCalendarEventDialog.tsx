@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"
 import {
     Dialog,
     DialogTitle,
@@ -8,28 +8,28 @@ import {
     Button,
     MenuItem,
     type SxProps,
-} from "@mui/material";
+} from "@mui/material"
 
 type FamilyGroups = {
-    id: number;
-    name: string;
+    id: number
+    name: string
 }
 
 interface CreateCalendarEventDialogProps {
-    open: boolean;
-    onClose: () => void;
-    cardStyle?: SxProps;
-    familyGroups: FamilyGroups[] | null;
-    selectedGroupId: number | null;
-    onEventCreated?: () => void;
+    open: boolean
+    onClose: () => void
+    cardStyle?: SxProps
+    familyGroups: FamilyGroups[] | null
+    selectedGroupId: number | null
+    onEventCreated?: () => void
 }
 
 type FieldErrors = {
-    title: string | null;
-    familyGroupId: string | null;
-    startAt: string | null;
-    endAt: string | null;
-    submit: string | null;
+    title: string | null
+    familyGroupId: string | null
+    startAt: string | null
+    endAt: string | null
+    submit: string | null
 }
 
 const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
@@ -177,7 +177,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         } finally {
             setIsCreating(false)
         }
-    };
+    }
 
     return (
         <Dialog
@@ -307,7 +307,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                 </Button>
             </DialogActions>
         </Dialog>
-    );
-};
+    )
+}
 
-export default CreateCalendarEventDialog;
+export default CreateCalendarEventDialog

@@ -18,8 +18,7 @@ export class FamilyGroupsService {
       throw new BadRequestException('ownerId is required')
     }
 
-    const trimedMembers = members
-      .map((member) => member.trim().toLowerCase())
+    const trimedMembers = members.map((member) => member.trim().toLowerCase())
 
     const setOfMembers = Array.from(new Set(trimedMembers))
 
@@ -31,19 +30,19 @@ export class FamilyGroupsService {
   }
 
   async create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
-    const trimedName = createFamilyGroupDto.name.trim().toLowerCase();
-    const trimedOwnerId = createFamilyGroupDto.ownerId.trim().toLowerCase();
+    const trimedName = createFamilyGroupDto.name.trim().toLowerCase()
+    const trimedOwnerId = createFamilyGroupDto.ownerId.trim().toLowerCase()
     const trimedMembers = this.members(
       createFamilyGroupDto.members,
       trimedOwnerId,
-    );
+    )
 
     const existing = await this.familyGroupsRepository.findOne({
       where: { name: trimedName },
-    });
+    })
 
     if (existing) {
-      throw new ConflictException('Family group name already exists');
+      throw new ConflictException('Family group name already exists')
     }
 
     const familyGroup = this.familyGroupsRepository.create({
@@ -71,16 +70,16 @@ export class FamilyGroupsService {
     const familyGroup = await this.findOne(id)
 
     if (typeof updateFamilyGroupDto.name === 'string') {
-      const trimedName = updateFamilyGroupDto.name.trim().toLowerCase();
+      const trimedName = updateFamilyGroupDto.name.trim().toLowerCase()
       const existing = await this.familyGroupsRepository.findOne({
         where: { name: trimedName },
-      });
+      })
 
       if (existing && existing.id !== familyGroup.id) {
-        throw new ConflictException('Family group name already exists');
+        throw new ConflictException('Family group name already exists')
       }
 
-      updateFamilyGroupDto.name = trimedName;
+      updateFamilyGroupDto.name = trimedName
     }
 
     if (Array.isArray(updateFamilyGroupDto.members)) {
