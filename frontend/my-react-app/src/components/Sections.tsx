@@ -61,7 +61,7 @@ const Sections: React.FC<SectionProps> = ({
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [selectedSection, setSelectedSection] = useState<string>("calendar")
   const [newCategoryName, setNewCategoryName] = useState("")
-  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; title?: string } | null>(null)
+  const [fullscreenImage, setFullscreenImage] = useState<{ url: string } | null>(null)
   
   const getFileExtension = (value: string): string => {
     const url = new URL(value)
@@ -271,7 +271,6 @@ const Sections: React.FC<SectionProps> = ({
         <Box
           component="img"
           src={asset.url}
-          alt={asset.title || "Uploaded image preview"}
           sx={{
             width: "100%",
             maxHeight: 180,
@@ -284,7 +283,6 @@ const Sections: React.FC<SectionProps> = ({
           onClick={() =>
             setFullscreenImage({
               url: asset.url,
-              title: asset.title,
             })
           }
         />
@@ -315,7 +313,7 @@ const Sections: React.FC<SectionProps> = ({
     <Card sx={cardStyle}>
       <Stack spacing={2}>
         <Typography variant="h6" fontWeight="bold">
-          Sections
+          Calendar & Categories
         </Typography>
 
         {error && (
@@ -394,14 +392,14 @@ const Sections: React.FC<SectionProps> = ({
                     },
                   }}
                 />
+                <IconButton
+                  onClick={() => deleteCategory(category)}
+                  aria-label={`Delete ${category.name}`}
+                  sx={{ color: "#ff8a80" }}
+                >
+                  <DeleteOutline fontSize="small" />
+                </IconButton>
               </ListItemButton>
-              <IconButton
-                onClick={() => deleteCategory(category)}
-                aria-label={`Delete ${category.name}`}
-                sx={{ color: "#ff8a80" }}
-              >
-                <DeleteOutline fontSize="small" />
-              </IconButton>
             </ListItem>
           ))}
         </List>
@@ -513,7 +511,6 @@ const Sections: React.FC<SectionProps> = ({
             <Box
               component="img"
               src={fullscreenImage.url}
-              alt={fullscreenImage.title || "Image preview"}
               sx={{
                 maxWidth: "100%",
                 maxHeight: "100%",

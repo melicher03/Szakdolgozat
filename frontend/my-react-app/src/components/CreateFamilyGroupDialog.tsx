@@ -8,7 +8,6 @@ import {
     Button,
     MenuItem,
     Stack,
-    Typography,
     type SxProps,
 } from "@mui/material"
 import type { User } from "@supabase/supabase-js"
@@ -197,14 +196,6 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
                             </MenuItem>
                         ))}
                     </TextField>
-
-                    <Typography variant="caption" sx={{ color: "#9fa6c2" }}>
-                        Choose members from the list of registered users.
-                    </Typography>
-
-                    <Typography variant="caption" sx={{ color: "#9fa6c2" }}>
-                        The logged-in user is always included automatically as the owner.
-                    </Typography>
                 </Stack>
             </DialogContent>
 

@@ -1,13 +1,14 @@
 import { Type } from 'class-transformer'
-import { IsInt, IsString, IsUrl } from 'class-validator'
+import { IsInt, IsOptional, IsString, IsUrl } from 'class-validator'
 
 export class CreateFileAssetDto {
   @Type(() => Number)
   @IsInt()
   familyGroupId: number
 
+  @IsOptional()
   @IsString()
-  title: string
+  title?: string
 
   @IsUrl()
   url: string

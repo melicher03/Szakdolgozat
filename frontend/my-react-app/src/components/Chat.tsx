@@ -52,7 +52,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
-  const [title, setTitle] = useState('')
+  const [linkTitle, setLinkTitle] = useState('')
   const [category, setCategory] = useState('')
   const [selectedFile, setselectedFile] = useState<File | null>(null)
   const [categories, setCategories] = useState<AssetCategory[]>([])
@@ -200,14 +200,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const closeLinkDialog = () => {
     setIsLinkDialogOpen(false)
     setLinkUrl('')
-    setTitle('')
+    setLinkTitle('')
     setCategory('')
   }
 
   const closeFileDialog = () => {
     setIsFileDialogOpen(false)
     setselectedFile(null)
-    setTitle('')
     setCategory('')
   }
 
@@ -224,7 +223,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         body: JSON.stringify({
           familyGroupId: Number(familyGroupId),
           url: linkUrl.trim(),
-          title: title.trim() || undefined,
+          title: linkTitle.trim() || undefined,
           uploadedBy: userName,
           categoryName: category,
         }),
@@ -274,7 +273,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           familyGroupId: Number(familyGroupId),
-          title: title.trim() || selectedFile.name,
+          title: selectedFile.name,
           url: data.publicUrl,
           storagePath,
           fileSize: selectedFile.size,
@@ -435,8 +434,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
             />
             <TextField
               placeholder="Title (optional)"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={linkTitle}
+              onChange={(e) => setLinkTitle(e.target.value)}
               fullWidth
               sx={{
                 '& .MuiInputBase-input': { color: '#f7f7f7' },
@@ -499,18 +498,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           {selectedFile && (
             <Typography variant="caption">Selected: {selectedFile.name}</Typography>
           )}
-          <TextField
-            placeholder="Title (optional)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            fullWidth
-            sx={{
-              '& .MuiInputBase-input': { color: '#f7f7f7' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#292d3b' },
-              },
-            }}
-          />
           <TextField
             select
             placeholder="Category"

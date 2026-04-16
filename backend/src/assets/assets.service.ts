@@ -111,7 +111,6 @@ export class AssetsService {
     const asset = this.assetsRepository.create({
       type: SharedAssetType.FILE,
       familyGroupId: dto.familyGroupId,
-      title: dto.title,
       url: dto.url,
       storagePath: dto.storagePath,
       fileSize: dto.fileSize,
