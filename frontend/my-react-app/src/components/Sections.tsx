@@ -310,7 +310,7 @@ const Sections: React.FC<SectionProps> = ({
   }
 
   return (
-    <Card sx={cardStyle}>
+    <>
       <Stack spacing={2}>
         <Typography variant="h6" fontWeight="bold">
           Calendar & Categories
@@ -406,11 +406,11 @@ const Sections: React.FC<SectionProps> = ({
 
         {selectedSection === "calendar" ? (
           <CalendarEventPanel 
-            onCreateCalendarEvent={onCreateCalendarEvent}
-            selectedGroupId={selectedGroupId}
+          onCreateCalendarEvent={onCreateCalendarEvent}
+          selectedGroupId={selectedGroupId}
             apiBaseUrl={apiBaseUrl}
             refreshTrigger={calendarRefreshTrigger ?? 0 }
-          />
+            />
         ) : (
           <>
             <List
@@ -426,7 +426,7 @@ const Sections: React.FC<SectionProps> = ({
                   borderRadius: "10px",
                 },
               }}
-            >
+              >
               {fileAssets.map((asset) => (
                 <ListItem key={asset.id} sx={{ px: 0 }}>
                   {renderMediaPreview(asset)}
@@ -498,8 +498,8 @@ const Sections: React.FC<SectionProps> = ({
       >
         {fullscreenImage && (
           <Box
-            sx={{
-              width: "100%",
+          sx={{
+            width: "100%",
               height: "100%",
               display: "flex",
               alignItems: "center",
@@ -520,7 +520,7 @@ const Sections: React.FC<SectionProps> = ({
           </Box>
         )}
       </Dialog>
-    </Card>
+    </>
   )
 }
 

@@ -58,14 +58,6 @@ export class FamilyGroupsService {
     return this.familyGroupsRepository.find({ order: { name: 'ASC' } })
   }
 
-  async findOne(id: string): Promise<FamilyGroup> {
-    const familyGroup = await this.familyGroupsRepository.findOne({ where: { id: Number(id) } })
-    if (!familyGroup) {
-      throw new NotFoundException(`Family group with id ${id} was not found`)
-    }
-    return familyGroup
-  }
-
   async update(id: string, updateFamilyGroupDto: UpdateFamilyGroupDto): Promise<FamilyGroup> {
     const familyGroup = await this.findOne(id)
 
@@ -90,6 +82,14 @@ export class FamilyGroupsService {
 
     Object.assign(familyGroup, updateFamilyGroupDto)
     return this.familyGroupsRepository.save(familyGroup)
+  }
+  
+  async findOne(id: string): Promise<FamilyGroup> {
+    const familyGroup = await this.familyGroupsRepository.findOne({ where: { id: Number(id) } })
+    if (!familyGroup) {
+      throw new NotFoundException(`Family group with id ${id} was not found`)
+    }
+    return familyGroup
   }
 
   async remove(id: string): Promise<void> {

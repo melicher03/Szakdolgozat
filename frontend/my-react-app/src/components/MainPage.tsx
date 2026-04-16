@@ -152,13 +152,15 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
 
                     {/* Left side */}
                     <Grid size={{ xs: 12, md: 3 }}>
-                        <GroupFilesPanel
-                            apiBaseUrl="http://localhost:3000"
-                            selectedGroupId={selectedGroupId}
-                            onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
-                            uploadRefreshTrigger={uploadRefreshTrigger}
-                            calendarRefreshTrigger={calendarRefreshTrigger}
-                        />
+                        <Card sx={cardStyle}>
+                            <GroupFilesPanel
+                                apiBaseUrl="http://localhost:3000"
+                                selectedGroupId={selectedGroupId}
+                                onCreateCalendarEvent={handleClickOpenCreateCalendarEvent}
+                                uploadRefreshTrigger={uploadRefreshTrigger}
+                                calendarRefreshTrigger={calendarRefreshTrigger}
+                            />
+                        </Card>
                     </Grid>
 
                     {/* Middle */}
