@@ -57,13 +57,9 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
 
             const data = (await response.json()) as Array<{ id: string; email: string }>
             const ownerId = (currentUser.email ?? currentUser.id).trim().toLowerCase()
-            const users = Array.from(
-                new Set(
-                    data
-                        .map((user) => user.email?.trim().toLowerCase())
-                        .filter((email) => email !== ownerId),
-                ),
-            )
+            const users = data
+                .map((user) => user.email?.trim().toLowerCase())
+                .filter((email) => email !== ownerId)
 
             if (isActive) {
                 setUserOptions(users)
@@ -93,41 +89,32 @@ const CreateFamilyGroupDialog: React.FC<CreateFamilyGroupDialogProps> = ({
             return
         }
 
-        const trimedMembers = Array.from(
-            new Set(
-                [ownerId, ...members.map((member) => member.trim().toLowerCase())].filter(
-                    (member) => member.length > 0,
-                ),
-            ),
-        )
+        const trimedMembers = [ownerId, ...members.map((member) => member.trim().toLowerCase())]
 
         setIsCreating(true)
         setErrorMessage(null)
 
-        try {
-            const response = await fetch('http://localhost:3000/family-groups', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: trimmedName,
-                    ownerId: ownerId,
-                    members: trimedMembers,
-                }),
-            })
+        const response = await fetch('http://localhost:3000/family-groups', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: trimmedName,
+                ownerId: ownerId,
+                members: trimedMembers,
+            }),
+        })
 
-            if (!response.ok) {
-                throw new Error("Could not create family group. Please try again.")
-            }
-
-            resetForm()
-            onClose()
-        } catch {
+        if (!response || !response.ok) {
             setErrorMessage("Could not create family group. Please try again.")
-        } finally {
             setIsCreating(false)
+            return
         }
+
+        resetForm()
+        onClose()
+        setIsCreating(false)
     }
 
     return (

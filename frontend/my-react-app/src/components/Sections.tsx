@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Card,
   Dialog,
   IconButton,
   List,
@@ -16,19 +15,24 @@ import { DeleteOutline } from "@mui/icons-material"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import CalendarEventPanel from "./CalendarEventPanel"
-import { cardStyle } from "./MainPage"
 import { CalendarIcon } from "@mui/x-date-pickers"
 
 type SharedAsset = {
   id: string
-  type: "FILE" | "URL"
   title?: string
   url: string
   fileSize?: number
   categoryName?: string | null
   familyGroupId: number
-  uploadedBy: string
   createdAt: string
+}
+
+type LinkItem = {
+  id: string
+  title?: string
+  url: string
+  categoryName?: string | null
+  familyGroupId: number
 }
 
 type AssetCategory = {
@@ -57,6 +61,7 @@ const Sections: React.FC<SectionProps> = ({
   calendarRefreshTrigger,
 }) => {
   const [assets, setAssets] = useState<SharedAsset[]>([])
+  const [links, setLinks] = useState<LinkItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [selectedSection, setSelectedSection] = useState<string>("calendar")
@@ -91,17 +96,30 @@ const Sections: React.FC<SectionProps> = ({
     }
 
     setError(null)
-    try {
-      const response = await fetch(`${apiBaseUrl}/assets?familyGroupId=${selectedGroupId}`)
-      if (!response.ok) {
-        throw new Error("Failed to load assets")
-      }
-
-      const data = (await response.json()) as SharedAsset[]
-      setAssets(data)
-    } catch {
+    const response = await fetch(`${apiBaseUrl}/assets?familyGroupId=${selectedGroupId}`)
+    if (!response || !response.ok) {
       setError("Failed to load group assets.")
+      return
     }
+
+    const data = (await response.json()) as SharedAsset[]
+    setAssets(data)
+  }, [apiBaseUrl, selectedGroupId])
+
+  const fetchLinks = useCallback(async () => {
+    if (!selectedGroupId) {
+      setLinks([])
+      return
+    }
+
+    const response = await fetch(`${apiBaseUrl}/links?familyGroupId=${selectedGroupId}`)
+    if (!response || !response.ok) {
+      setLinks([])
+      return
+    }
+
+    const data = (await response.json()) as LinkItem[]
+    setLinks(data)
   }, [apiBaseUrl, selectedGroupId])
 
   const fetchCategories = useCallback(async () => {
@@ -110,26 +128,24 @@ const Sections: React.FC<SectionProps> = ({
       return
     }
 
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/assets/categories?familyGroupId=${selectedGroupId}`,
-      )
+    const response = await fetch(
+      `${apiBaseUrl}/assets/categories?familyGroupId=${selectedGroupId}`,
+    )
 
-      if (!response.ok) {
-        throw new Error("Failed to load categories")
-      }
-
-      const data = (await response.json()) as AssetCategory[]
-      setCategories(data.sort((left, right) => left.name.localeCompare(right.name)))
-    } catch {
+    if (!response || !response.ok) {
       setCategories([])
+      return
     }
+
+    const data = (await response.json()) as AssetCategory[]
+    setCategories(data.sort((left, right) => left.name.localeCompare(right.name)))
   }, [apiBaseUrl, selectedGroupId])
 
   useEffect(() => {
     fetchAssets()
+    fetchLinks()
     fetchCategories()
-  }, [fetchAssets, fetchCategories])
+  }, [fetchAssets, fetchCategories, fetchLinks])
 
   useEffect(() => {
     let socket: Socket | null = null
@@ -155,6 +171,7 @@ const Sections: React.FC<SectionProps> = ({
 
     socket.on("asset-category-updated", () => {
       fetchAssets()
+      fetchLinks()
       fetchCategories()
     })
 
@@ -162,11 +179,15 @@ const Sections: React.FC<SectionProps> = ({
       fetchAssets()
     })
 
+    socket.on("link-created", () => {
+      fetchLinks()
+    })
+
     return () => {
       socket?.emit("leave-group", { familyGroupId: String(selectedGroupId) })
       socket?.disconnect()
     }
-  }, [fetchAssets, fetchCategories, selectedGroupId])
+  }, [fetchAssets, fetchCategories, fetchLinks, selectedGroupId])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -186,8 +207,9 @@ const Sections: React.FC<SectionProps> = ({
   useEffect(() => {
     if (uploadRefreshTrigger !== undefined && uploadRefreshTrigger > 0) {
       void fetchAssets()
+      void fetchLinks()
     }
-  }, [uploadRefreshTrigger, fetchAssets])
+  }, [uploadRefreshTrigger, fetchAssets, fetchLinks])
 
   
   const addCategory = async () => {
@@ -196,56 +218,50 @@ const Sections: React.FC<SectionProps> = ({
     const trimmed = newCategoryName.trim()
     if (!trimmed) return
 
-    try {
-      const response = await fetch(`${apiBaseUrl}/assets/categories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          familyGroupId: selectedGroupId,
-          name: trimmed,
-        }),
-      })
+    const response = await fetch(`${apiBaseUrl}/assets/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        familyGroupId: selectedGroupId,
+        name: trimmed,
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to create category")
-      }
-
-      const createdCategory = (await response.json()) as AssetCategory
-      setCategories((prev) => {
-        if (prev.some((category) => category.id === createdCategory.id)) return prev
-        return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name))
-      })
-      setSelectedSection(createdCategory.name)
-      setNewCategoryName("")
-      fetchCategories()
-    } catch {
+    if (!response || !response.ok) {
       setError("Failed to create category.")
+      return
     }
+
+    const createdCategory = (await response.json()) as AssetCategory
+    setCategories((prev) => {
+      if (prev.some((category) => category.id === createdCategory.id)) return prev
+      return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name))
+    })
+    setSelectedSection(createdCategory.name)
+    setNewCategoryName("")
+    fetchCategories()
   }
 
   const deleteCategory = async (category: AssetCategory) => {
     setError(null)
 
-    try {
-      const response = await fetch(`${apiBaseUrl}/assets/categories/${category.id}`, {
-        method: "DELETE",
-      })
+    const response = await fetch(`${apiBaseUrl}/assets/categories/${category.id}`, {
+      method: "DELETE",
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to delete category")
-      }
-
-      setCategories((prev) => prev.filter((item) => item.id !== category.id))
-      if (selectedSection === category.name) {
-        setSelectedSection("calendar")
-      }
-      await fetchAssets()
-      await fetchCategories()
-    } catch {
+    if (!response || !response.ok) {
       setError("Failed to delete category.")
+      return
     }
+
+    setCategories((prev) => prev.filter((item) => item.id !== category.id))
+    if (selectedSection === category.name) {
+      setSelectedSection("calendar")
+    }
+    await fetchAssets()
+    await fetchCategories()
   }
 
   const filteredAssets = useMemo(() => {
@@ -253,15 +269,12 @@ const Sections: React.FC<SectionProps> = ({
     return assets.filter((asset) => (asset.categoryName ?? "") === selectedSection)
   }, [assets, selectedSection])
 
-  const fileAssets = useMemo(
-    () => filteredAssets.filter((asset) => asset.type === "FILE"),
-    [filteredAssets],
-  )
+  const filteredLinks = useMemo(() => {
+    if (selectedSection === "calendar") return []
+    return links.filter((link) => (link.categoryName ?? "") === selectedSection)
+  }, [links, selectedSection])
 
-  const urlAssets = useMemo(
-    () => filteredAssets.filter((asset) => asset.type === "URL"),
-    [filteredAssets],
-  )
+  const fileAssets = useMemo(() => filteredAssets, [filteredAssets])
 
   const renderMediaPreview = (asset: SharedAsset) => {
     const mediaKind = getFileType(asset.url)
@@ -447,11 +460,11 @@ const Sections: React.FC<SectionProps> = ({
                 },
               }}
             >
-              {urlAssets.map((asset) => (
-                <ListItem key={asset.id} sx={{ px: 0, display: "block" }}>
+              {filteredLinks.map((link) => (
+                <ListItem key={link.id} sx={{ px: 0, display: "block" }}>
                   <Box
                     component="a"
-                    href={asset.url}
+                    href={link.url}
                     target="_blank"
                     sx={{
                       color: "#f7f7f7",
@@ -459,8 +472,8 @@ const Sections: React.FC<SectionProps> = ({
                     }}
                   >
                     <ListItemText
-                      primary={asset.title ? `Title: ${asset.title}` : "Link:"}
-                      secondary={asset.url}
+                      primary={link.title ? `Title: ${link.title}` : "Link:"}
+                      secondary={link.url}
                       slotProps={{
                         primary: {
                           sx: { color: "#9fa6c2", fontSize: 15, wordBreak: "break-word" },
@@ -475,7 +488,9 @@ const Sections: React.FC<SectionProps> = ({
               ))}
             </List>
 
-            {assets.length > 0 && filteredAssets.length === 0 && (
+            {(assets.length > 0 || links.length > 0) &&
+              filteredAssets.length === 0 &&
+              filteredLinks.length === 0 && (
               <Typography variant="caption" color="#f7f7f7">
                 No files or links are assigned to this category yet.
               </Typography>

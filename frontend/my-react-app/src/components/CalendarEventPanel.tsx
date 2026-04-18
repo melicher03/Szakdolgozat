@@ -60,19 +60,17 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
       }
 
       setError(null)
-      try {
-        const response = await fetch(
-          `${apiBaseUrl}/calendar-events?familyGroupId=${selectedGroupId}`
-        )
-        if (!response.ok) {
-          throw new Error("Failed to load calendar events")
-        }
-        const data = (await response.json()) as CalendarEvent[]
-        setEvents(data)
-      } catch (err) {
-        console.error("Error loading events:", err)
+      const response = await fetch(
+        `${apiBaseUrl}/calendar-events?familyGroupId=${selectedGroupId}`
+      )
+
+      if (!response || !response.ok) {
         setError("Failed to load calendar events")
+        return
       }
+
+      const data = (await response.json()) as CalendarEvent[]
+      setEvents(data)
     }
 
     fetchEvents()
@@ -102,20 +100,16 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
 
     setError(null)
 
-    try {
-      const response = await fetch(`${apiBaseUrl}/calendar-events/${eventId}`, {
-        method: "DELETE",
-      })
+    const response = await fetch(`${apiBaseUrl}/calendar-events/${eventId}`, {
+      method: "DELETE",
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to delete calendar event")
-      }
-
-      setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId))
-    } catch (err) {
-      console.error("Error deleting event:", err)
+    if (!response || !response.ok) {
       setError("Failed to delete calendar event")
+      return
     }
+
+    setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId))
   }
 
   const Day = (props: PickersDayProps) => {

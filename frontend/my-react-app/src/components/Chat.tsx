@@ -66,17 +66,16 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       return
     }
 
-    try {
-      const response = await fetch(`http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`)
-      if (!response.ok) {
-        throw new Error('Failed to load categories')
-      }
-
-      const data = (await response.json()) as AssetCategory[]
-      setCategories(data)
-    } catch {
+    const response = await fetch(
+      `http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`,
+    )
+    if (!response || !response.ok) {
       setCategories([])
+      return
     }
+
+    const data = (await response.json()) as AssetCategory[]
+    setCategories(data)
   }, [familyGroupId])
 
   const scrollToBottom = () => {
@@ -116,38 +115,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
   useEffect(() => {
     let socket: Socket | null = null
-    let isActive = true
 
     const loadHistoryAndConnect = async () => {
+      setMessages([])
       if (familyGroupId === null) {
-        setMessages([])
         setIsConnected(false)
         setCurrentSocket(null)
         return
       }
 
-      try {
-        const response = await fetch(`http://localhost:3000/messages?familyGroupId=${familyGroupId}`)
-        if (response.ok) {
-          const history = (await response.json()) as Message[]
-          if (isActive) {
-            setMessages(history)
-          }
-        }
-      } catch {
-        if (isActive) {
-          setMessages([])
-        }
+      const response = await fetch(
+        `http://localhost:3000/messages?familyGroupId=${familyGroupId}`,
+      )
+      if (!response || !response.ok) {
+        return
       }
 
-      if (!isActive) return
+      const history = (await response.json()) as Message[]
+      setMessages(history)
 
-      socket = io('http://localhost:3000', {
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5,
-      })
+      socket = io('http://localhost:3000')
       setCurrentSocket(socket)
 
       socket.on('connect', () => {
@@ -176,7 +163,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     void loadHistoryAndConnect()
 
     return () => {
-      isActive = false
       socket?.emit('leave-group', { familyGroupId })
       socket?.disconnect()
       setCurrentSocket(null)
@@ -216,31 +202,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       return
     }
 
-    try {
-      const response = await fetch('http://localhost:3000/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          familyGroupId: Number(familyGroupId),
-          url: linkUrl.trim(),
-          title: linkTitle.trim() || undefined,
-          uploadedBy: userName,
-          categoryName: category,
-        }),
-      })
+    const response = await fetch('http://localhost:3000/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        familyGroupId: Number(familyGroupId),
+        url: linkUrl.trim(),
+        title: linkTitle.trim() || undefined,
+        categoryName: category,
+      }),
+    })
 
-      if (!response.ok) {
-        const text = await response.text()
-        setResult(`Link upload failed: ${text}`)
-        return
-      }
-
-      setResult('Link uploaded successfully.')
-      closeLinkDialog()
-      onUploadSuccess?.()
-    } catch (error) {
-      setResult(`Link upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    if (!response || !response.ok) {
+      const text = response ? await response.text() : 'Network error'
+      setResult(`Link upload failed: ${text}`)
+      return
     }
+
+    setResult('Link uploaded successfully.')
+    closeLinkDialog()
+    onUploadSuccess?.()
   }
 
   const handleUploadFile = async () => {
@@ -249,53 +230,46 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       return
     }
 
-    try {
-      const fileExtension = selectedFile.name.split('.').pop() || 'bin'
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`
-      const storagePath = `family-${familyGroupId}/${fileName}`
+    const fileExtension = selectedFile.name.split('.').pop() || 'bin'
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`
+    const storagePath = `family-${familyGroupId}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
-        .from(storageBucket)
-        .upload(storagePath, selectedFile, {
-          contentType: selectedFile.type || undefined,
-          upsert: false,
-        })
-
-      if (uploadError) {
-        setResult(`Media upload failed: ${uploadError.message}`)
-        return
-      }
-
-      const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath)
-
-      const response = await fetch('http://localhost:3000/assets/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          familyGroupId: Number(familyGroupId),
-          title: selectedFile.name,
-          url: data.publicUrl,
-          storagePath,
-          fileSize: selectedFile.size,
-          uploadedBy: userName,
-          categoryName: category,
-        }),
+    const { error: uploadError } = await supabase.storage
+      .from(storageBucket)
+      .upload(storagePath, selectedFile, {
+        contentType: selectedFile.type || undefined,
+        upsert: false,
       })
 
-      if (!response.ok) {
-        const text = await response.text()
-        setResult(`Media metadata save failed: ${text}`)
-        return
-      }
-
-      setResult('Media uploaded successfully.')
-      closeFileDialog()
-      onUploadSuccess?.()
-    } catch (error) {
-      setResult(
-        `Media upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
+    if (uploadError) {
+      setResult(`Media upload failed: ${uploadError.message}`)
+      return
     }
+
+    const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath)
+
+    const response = await fetch('http://localhost:3000/assets/file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        familyGroupId: Number(familyGroupId),
+        title: selectedFile.name,
+        url: data.publicUrl,
+        storagePath,
+        fileSize: selectedFile.size,
+        categoryName: category,
+      }),
+    })
+
+    if (!response || !response.ok) {
+      const text = response ? await response.text() : 'Network error'
+      setResult(`Media metadata save failed: ${text}`)
+      return
+    }
+
+    setResult('Media uploaded successfully.')
+    closeFileDialog()
+    onUploadSuccess?.()
   }
 
   return (

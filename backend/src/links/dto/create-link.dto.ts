@@ -14,8 +14,8 @@ export class CreateLinkDto {
   title?: string
 
   @IsString()
-  uploadedBy: string
-
-  @IsString()
   categoryName: string
 }
+
+
+

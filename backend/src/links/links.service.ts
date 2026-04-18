@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { SharedAsset, SharedAssetType } from '../entities/shared-asset.entity'
+import { Link } from '../entities/link.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
 import { MessagesGateway } from '../messages/messages.gateway'
 import { CreateLinkDto } from './dto/create-link.dto'
@@ -9,48 +9,42 @@ import { CreateLinkDto } from './dto/create-link.dto'
 @Injectable()
 export class LinksService {
   constructor(
-    @InjectRepository(SharedAsset)
-    private readonly assetsRepository: Repository<SharedAsset>,
+    @InjectRepository(Link)
+    private readonly linksRepository: Repository<Link>,
     @InjectRepository(FamilyGroup)
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
     private readonly messagesGateway: MessagesGateway,
   ) {}
 
-  async findAll(familyGroupId?: string): Promise<SharedAsset[]> {
+  async findAll(familyGroupId?: string): Promise<Link[]> {
     const checkedFamilyGroupId = 
       familyGroupId && familyGroupId.trim().length > 0 ? Number(familyGroupId) : undefined
 
-    return this.assetsRepository.find({
-      where: {
-        type: SharedAssetType.URL,
-        ...(checkedFamilyGroupId ? { familyGroupId: checkedFamilyGroupId } : {}),
-      },
-      order: { createdAt: 'DESC' },
+    return this.linksRepository.find({
+      where: checkedFamilyGroupId ? { familyGroupId: checkedFamilyGroupId } : {},
     })
   }
 
-  async createLink(dto: CreateLinkDto): Promise<SharedAsset> {
+  async createLink(dto: CreateLinkDto): Promise<Link> {
     const familyGroup = 
       await this.familyGroupsRepository.findOne({ where: { id: dto.familyGroupId } })
       
     if (!familyGroup) {
-      throw new BadRequestException(`Family group with id ${dto.familyGroupId} does not exist`)
+      throw new NotFoundException(`Family group with id ${dto.familyGroupId} does not exist`)
     }
 
-    const asset = this.assetsRepository.create({
-      type: SharedAssetType.URL,
+    const link = this.linksRepository.create({
       familyGroupId: dto.familyGroupId,
       url: dto.url,
       title: dto.title,
-      uploadedBy: dto.uploadedBy,
-      categoryName: dto.categoryName?.trim() || undefined,
+      categoryName: dto.categoryName.trim(),
     })
 
-    const savedAsset = await this.assetsRepository.save(asset)
+    const savedLink = await this.linksRepository.save(link)
     this.messagesGateway.server
       .to(String(dto.familyGroupId))
-      .emit('asset-created', savedAsset)
+      .emit('link-created', savedLink)
 
-    return savedAsset
+    return savedLink
   }
 }

@@ -64,24 +64,17 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
     const loadUsers = async () => {
       if (!openEditDialog) return
 
-      try {
-        const response = await fetch("http://localhost:3000/users")
-        if (!response.ok) {
-          throw new Error("Failed to load users")
-        }
-
-        const data = (await response.json()) as Array<{ id: string; email: string }>
-        const nextUsers = Array.from(
-          new Set(
-            data
-              .map((user) => user.email?.trim().toLowerCase())
-              .filter((email): email is string => Boolean(email)),
-          ),
-        )
-        setUserOptions(nextUsers)
-      } catch {
+      const response = await fetch("http://localhost:3000/users")
+      if (!response || !response.ok) {
         setUserOptions([])
+        return
       }
+
+      const data = (await response.json()) as Array<{ id: string; email: string }>
+      const nextUsers = data
+        .map((user) => user.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email))
+      setUserOptions(nextUsers)
     }
 
     loadUsers()
@@ -97,19 +90,16 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
 
   const handleDelete = async (group: FamilyGroup) => {
 
-    try {
-      const response = await fetch(`http://localhost:3000/family-groups/${group.id}`, {
-        method: "DELETE",
-      })
+    const response = await fetch(`http://localhost:3000/family-groups/${group.id}`, {
+      method: "DELETE",
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to delete group")
-      }
-
-      onGroupsChanged()
-    } catch {
+    if (!response || !response.ok) {
       setEditError("Could not delete the family group.")
+      return
     }
+
+    onGroupsChanged()
   }
 
   const handleSaveEdit = async () => {
@@ -123,27 +113,24 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
 
     setEditError(null)
 
-    try {
-      const response = await fetch(`http://localhost:3000/family-groups/${activeGroup.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: trimmedName,
-          members: editMembers,
-        }),
-      })
+    const response = await fetch(`http://localhost:3000/family-groups/${activeGroup.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: trimmedName,
+        members: editMembers,
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to update group")
-      }
-
-      setOpenEditDialog(false)
-      onGroupsChanged()
-    } catch {
+    if (!response || !response.ok) {
       setEditError("Could not update the family group.")
+      return
     }
+
+    setOpenEditDialog(false)
+    onGroupsChanged()
   }
 
   return (
@@ -157,7 +144,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          Chats
+          Groups
         </Typography>
         <Stack direction="row" spacing={1}>
           <IconButton

@@ -21,8 +21,5 @@ export class CreateFileAssetDto {
   fileSize: number
 
   @IsString()
-  uploadedBy: string
-
-  @IsString()
   categoryName: string
 }

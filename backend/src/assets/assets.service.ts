@@ -6,7 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { AssetCategory } from '../entities/asset-category.entity'
-import { SharedAsset, SharedAssetType } from '../entities/shared-asset.entity'
+import { Link } from '../entities/link.entity'
+import { SharedAsset } from '../entities/shared-asset.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
 import { MessagesGateway } from '../messages/messages.gateway'
 import { CreateAssetCategoryDto } from './dto/create-asset-category.dto'
@@ -19,6 +20,8 @@ export class AssetsService {
     private readonly assetsRepository: Repository<SharedAsset>,
     @InjectRepository(AssetCategory)
     private readonly assetCategoriesRepository: Repository<AssetCategory>,
+    @InjectRepository(Link)
+    private readonly linksRepository: Repository<Link>,
     @InjectRepository(FamilyGroup)
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
     private readonly messagesGateway: MessagesGateway,
@@ -93,7 +96,16 @@ export class AssetsService {
         familyGroupId: category.familyGroupId,
         categoryName: category.name,
       },
-      { categoryName: null },
+      { categoryName: '' }
+
+    )
+
+    await this.linksRepository.update(
+      {
+        familyGroupId: category.familyGroupId,
+        categoryName: category.name,
+      },
+      { categoryName: '' },
     )
 
     await this.assetCategoriesRepository.remove(category)
@@ -109,12 +121,10 @@ export class AssetsService {
     }
 
     const asset = this.assetsRepository.create({
-      type: SharedAssetType.FILE,
       familyGroupId: dto.familyGroupId,
       url: dto.url,
       storagePath: dto.storagePath,
       fileSize: dto.fileSize,
-      uploadedBy: dto.uploadedBy,
       categoryName: dto.categoryName?.trim() || undefined,
     })
 

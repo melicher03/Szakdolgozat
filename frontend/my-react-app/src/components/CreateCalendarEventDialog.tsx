@@ -142,41 +142,38 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         setIsCreating(true)
         setErrors(nextErrors)
 
-        try {
-            const response = await fetch('http://localhost:3000/calendar-events', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    title: trimmedTitle,
-                    description: description.trim() || "",
-                    familyGroupId: Number(familyGroupId.trim()),
-                    startAt: startDate.toISOString(),
-                    endAt: endDate.toISOString(),
-                }),
-            })
+        const response = await fetch('http://localhost:3000/calendar-events', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                title: trimmedTitle,
+                description: description.trim() || "",
+                familyGroupId: Number(familyGroupId.trim()),
+                startAt: startDate.toISOString(),
+                endAt: endDate.toISOString(),
+            }),
+        })
 
-            if (!response.ok) {
-                throw new Error("Could not create calendar event. Please try again.")
-            }
-
-            setTitle("")
-            setDescription("")
-            setFamilyGroupId("")
-            setStartAt("")
-            setEndAt("")
-            setErrors(nextErrors)
-            onClose()
-            onEventCreated?.()
-        } catch {
+        if (!response || !response.ok) {
             setErrors({
                 ...nextErrors,
                 submit: "Could not create calendar event. Please try again.",
             })
-        } finally {
             setIsCreating(false)
+            return
         }
+
+        setTitle("")
+        setDescription("")
+        setFamilyGroupId("")
+        setStartAt("")
+        setEndAt("")
+        setErrors(nextErrors)
+        onClose()
+        onEventCreated?.()
+        setIsCreating(false)
     }
 
     return (

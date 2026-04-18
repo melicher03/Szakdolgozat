@@ -1,6 +1,5 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -8,8 +7,8 @@ import {
 } from 'typeorm'
 import { FamilyGroup } from './family-group.entity'
 
-@Entity('shared_assets')
-export class SharedAsset {
+@Entity('links')
+export class Link {
   @PrimaryGeneratedColumn()
   id: string
 
@@ -19,14 +18,8 @@ export class SharedAsset {
   @Column()
   url: string
 
-  @Column({ nullable: true })
-  storagePath?: string
-
-  @Column({ nullable: true })
-  fileSize?: number
-
-  @Column({ type: 'varchar', nullable: true })
-  categoryName?: string | null
+  @Column()
+  categoryName: string
 
   @Column()
   familyGroupId: number
@@ -34,7 +27,4 @@ export class SharedAsset {
   @ManyToOne(() => FamilyGroup, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'familyGroupId' })
   familyGroup: FamilyGroup
-
-  @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date
 }

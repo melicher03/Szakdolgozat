@@ -12,40 +12,37 @@ const LoginPage: React.FC = () => {
     const handleLogin = async () => {
         setError(null)
         setLoading(true)
-        try {
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
 
-            if (signInError) throw signInError
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed')
-        } finally {
-            setLoading(false)
+        if (error) {
+            setError(error.message)
         }
+
+        setLoading(false)
     }
 
     const handleRegister = async () => {
         setError(null)
         setLoading(true)
-        try {
-            const { error: signUpError } = await supabase.auth.signUp({
-                email,
-                password,
-            })
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+        })
 
-            if (signUpError) throw signUpError
+        if (error) {
+            setError(error.message)
+        } else {
             setError(null)
             alert('Registration successful! Please sign in.')
             setIsRegistering(false)
             setEmail('')
             setPassword('')
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Registration failed')
-        } finally {
-            setLoading(false)
         }
+
+        setLoading(false)
     }
 
     const handleSubmit = (e: React.FormEvent) => {

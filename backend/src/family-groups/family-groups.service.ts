@@ -12,7 +12,7 @@ export class FamilyGroupsService {
     private readonly familyGroupsRepository: Repository<FamilyGroup>,
   ) {}
 
-  private members(members: string[], ownerId: string): string[] {
+  private createMembersList(members: string[], ownerId: string): string[] {
     const owner = ownerId.trim().toLowerCase()
     if (!owner) {
       throw new BadRequestException('ownerId is required')
@@ -20,19 +20,19 @@ export class FamilyGroupsService {
 
     const trimedMembers = members.map((member) => member.trim().toLowerCase())
 
-    const setOfMembers = Array.from(new Set(trimedMembers))
+    const normalizedMembers = [...trimedMembers]
 
-    if (!setOfMembers.includes(owner)) {
-      setOfMembers.push(owner)
+    if (!normalizedMembers.includes(owner)) {
+      normalizedMembers.push(owner)
     }
 
-    return setOfMembers
+    return normalizedMembers
   }
 
   async create(createFamilyGroupDto: CreateFamilyGroupDto): Promise<FamilyGroup> {
     const trimedName = createFamilyGroupDto.name.trim().toLowerCase()
     const trimedOwnerId = createFamilyGroupDto.ownerId.trim().toLowerCase()
-    const trimedMembers = this.members(
+    const trimedMembers = this.createMembersList(
       createFamilyGroupDto.members,
       trimedOwnerId,
     )
@@ -77,7 +77,7 @@ export class FamilyGroupsService {
     if (Array.isArray(updateFamilyGroupDto.members)) {
       const newMembers = updateFamilyGroupDto.members
 
-      updateFamilyGroupDto.members = this.members(newMembers, familyGroup.ownerId)
+      updateFamilyGroupDto.members = this.createMembersList(newMembers, familyGroup.ownerId)
     }
 
     Object.assign(familyGroup, updateFamilyGroupDto)

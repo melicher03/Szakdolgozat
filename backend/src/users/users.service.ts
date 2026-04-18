@@ -36,7 +36,8 @@ export class UsersService {
   }
 
   private filterAndFormatUsers(candidates: string[]): UserSuggestion[] {
-    return Array.from(new Set(candidates.map((value) => value.trim().toLowerCase())))
+    return candidates
+      .map((value) => value.trim().toLowerCase())
       .filter((value) => value.length > 0)
       .filter((value) => EMAIL_PATTERN.test(value))
       .map((email) => ({
@@ -47,12 +48,10 @@ export class UsersService {
 
   async findAll(): Promise<UserSuggestion[]> {
     if (!this.supabase) {
-      try {
-        const fromAuthSchema = await this.findUsersFromAuthSchema()
-        if (fromAuthSchema.length > 0) {
-          return fromAuthSchema
-        }
-      } catch {}
+      const fromAuthSchema = await this.findUsersFromAuthSchema().catch(() => [])
+      if (fromAuthSchema.length > 0) {
+        return fromAuthSchema
+      }
       return []
     }
 
