@@ -21,10 +21,8 @@ import { supabase } from "../services/supabaseClient"
 type SharedAsset = {
   id: string
   storagePath: string
-  fileSize?: number
   categoryName?: string | null
   familyGroupId: number
-  createdAt: string
 }
 
 type LinkItem = {

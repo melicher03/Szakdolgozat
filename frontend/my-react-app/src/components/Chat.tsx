@@ -57,7 +57,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [selectedFile, setselectedFile] = useState<File | null>(null)
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [result, setResult] = useState<string | null>(null)
-  const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET ?? 'media'
 
   const loadCategories = useCallback(async () => {
     if (!familyGroupId) {
@@ -230,16 +229,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       return
     }
 
-    const fileExtension = selectedFile.name.split('.').pop() || 'bin'
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`
+    const fileExtension = selectedFile.name.split('.').pop()
+    const fileName = `${Date.now()}.${fileExtension}`
     const storagePath = `family-${familyGroupId}/${fileName}`
 
     const { error: uploadError } = await supabase.storage
-      .from(storageBucket)
-      .upload(storagePath, selectedFile, {
-        contentType: selectedFile.type,
-        upsert: false,
-      })
+      .from('media')
+      .upload(storagePath, selectedFile)
 
     if (uploadError) {
       setResult(`Media upload failed: ${uploadError.message}`)

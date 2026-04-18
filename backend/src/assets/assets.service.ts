@@ -34,8 +34,7 @@ export class AssetsService {
     return this.assetsRepository.find({
       where: normalizedFamilyGroupId
         ? { familyGroupId: normalizedFamilyGroupId, storagePath: Not('') }
-        : { storagePath: Not('') },
-      order: { createdAt: 'DESC' },
+        : { storagePath: Not('') }
     })
   }
 
@@ -125,7 +124,6 @@ export class AssetsService {
     const asset = this.assetsRepository.create({
       familyGroupId: dto.familyGroupId,
       storagePath: dto.storagePath,
-      fileSize: dto.fileSize,
       categoryName: dto.categoryName?.trim() || undefined,
     })
 

@@ -1,6 +1,5 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -16,9 +15,6 @@ export class SharedAsset {
   @Column({ nullable: true })
   storagePath?: string
 
-  @Column({ nullable: true })
-  fileSize?: number
-
   @Column({ type: 'varchar', nullable: true })
   categoryName?: string | null
 
@@ -28,7 +24,4 @@ export class SharedAsset {
   @ManyToOne(() => FamilyGroup, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'familyGroupId' })
   familyGroup: FamilyGroup
-
-  @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date
 }

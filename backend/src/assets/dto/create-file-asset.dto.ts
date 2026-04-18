@@ -9,10 +9,6 @@ export class CreateFileAssetDto {
   @IsString()
   storagePath: string
 
-  @Type(() => Number)
-  @IsInt()
-  fileSize: number
-
   @IsString()
   categoryName: string
 }
