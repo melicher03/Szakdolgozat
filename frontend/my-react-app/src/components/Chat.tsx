@@ -237,7 +237,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     const { error: uploadError } = await supabase.storage
       .from(storageBucket)
       .upload(storagePath, selectedFile, {
-        contentType: selectedFile.type || undefined,
+        contentType: selectedFile.type,
         upsert: false,
       })
 
@@ -246,15 +246,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       return
     }
 
-    const { data } = supabase.storage.from(storageBucket).getPublicUrl(storagePath)
-
     const response = await fetch('http://localhost:3000/assets/file', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         familyGroupId: Number(familyGroupId),
-        title: selectedFile.name,
-        url: data.publicUrl,
         storagePath,
         fileSize: selectedFile.size,
         categoryName: category,

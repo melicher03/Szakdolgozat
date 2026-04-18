@@ -16,11 +16,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import CalendarEventPanel from "./CalendarEventPanel"
 import { CalendarIcon } from "@mui/x-date-pickers"
+import { supabase } from "../services/supabaseClient"
 
 type SharedAsset = {
   id: string
-  title?: string
-  url: string
+  storagePath: string
   fileSize?: number
   categoryName?: string | null
   familyGroupId: number
@@ -60,6 +60,7 @@ const Sections: React.FC<SectionProps> = ({
   uploadRefreshTrigger,
   calendarRefreshTrigger,
 }) => {
+  const storageBucket = "media"
   const [assets, setAssets] = useState<SharedAsset[]>([])
   const [links, setLinks] = useState<LinkItem[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -69,11 +70,13 @@ const Sections: React.FC<SectionProps> = ({
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string } | null>(null)
   
   const getFileExtension = (value: string): string => {
-    const url = new URL(value)
-    const pathname = url.pathname
+    const pathname = value.split("?")[0]
     const lastDot = pathname.lastIndexOf(".")
     return lastDot >= 0 ? pathname.slice(lastDot + 1).toLowerCase() : ""
   }
+
+  const getPublicFileUrl = (storagePath: string): string =>
+    supabase.storage.from(storageBucket).getPublicUrl(storagePath).data.publicUrl
   
   const getFileType = (value: string): "image" | "video" | null => {
     const extension = getFileExtension(value)
@@ -277,13 +280,14 @@ const Sections: React.FC<SectionProps> = ({
   const fileAssets = useMemo(() => filteredAssets, [filteredAssets])
 
   const renderMediaPreview = (asset: SharedAsset) => {
-    const mediaKind = getFileType(asset.url)
+    const mediaKind = getFileType(asset.storagePath)
+    const publicUrl = getPublicFileUrl(asset.storagePath)
 
     if (mediaKind === "image") {
       return (
         <Box
           component="img"
-          src={asset.url}
+          src={publicUrl}
           sx={{
             width: "100%",
             maxHeight: 180,
@@ -295,7 +299,7 @@ const Sections: React.FC<SectionProps> = ({
           }}
           onClick={() =>
             setFullscreenImage({
-              url: asset.url,
+              url: publicUrl,
             })
           }
         />
@@ -306,7 +310,7 @@ const Sections: React.FC<SectionProps> = ({
       return (
         <Box
           component="video"
-          src={asset.url}
+          src={publicUrl}
           controls
           sx={{
             width: "100%",

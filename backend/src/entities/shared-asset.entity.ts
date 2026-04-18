@@ -14,12 +14,6 @@ export class SharedAsset {
   id: string
 
   @Column({ nullable: true })
-  title?: string
-
-  @Column()
-  url: string
-
-  @Column({ nullable: true })
   storagePath?: string
 
   @Column({ nullable: true })

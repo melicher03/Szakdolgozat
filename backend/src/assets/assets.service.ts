@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Not, Repository } from 'typeorm'
 import { AssetCategory } from '../entities/asset-category.entity'
 import { Link } from '../entities/link.entity'
 import { SharedAsset } from '../entities/shared-asset.entity'
@@ -32,7 +32,9 @@ export class AssetsService {
       familyGroupId && familyGroupId.trim().length > 0 ? Number(familyGroupId) : undefined
 
     return this.assetsRepository.find({
-      where: normalizedFamilyGroupId ? { familyGroupId: normalizedFamilyGroupId } : {},
+      where: normalizedFamilyGroupId
+        ? { familyGroupId: normalizedFamilyGroupId, storagePath: Not('') }
+        : { storagePath: Not('') },
       order: { createdAt: 'DESC' },
     })
   }
@@ -122,7 +124,6 @@ export class AssetsService {
 
     const asset = this.assetsRepository.create({
       familyGroupId: dto.familyGroupId,
-      url: dto.url,
       storagePath: dto.storagePath,
       fileSize: dto.fileSize,
       categoryName: dto.categoryName?.trim() || undefined,
