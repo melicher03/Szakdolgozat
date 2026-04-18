@@ -6,27 +6,19 @@ import {
     DialogActions,
     TextField,
     Button,
-    MenuItem,
     type SxProps,
 } from "@mui/material"
-
-type FamilyGroups = {
-    id: number
-    name: string
-}
 
 interface CreateCalendarEventDialogProps {
     open: boolean
     onClose: () => void
     cardStyle?: SxProps
-    familyGroups: FamilyGroups[] | null
     selectedGroupId: number | null
     onEventCreated?: () => void
 }
 
 type FieldErrors = {
     title: string | null
-    familyGroupId: string | null
     startAt: string | null
     endAt: string | null
     submit: string | null
@@ -36,19 +28,16 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
     open,
     onClose,
     cardStyle,
-    familyGroups,
     selectedGroupId,
     onEventCreated,
 }) => {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
-    const [familyGroupId, setFamilyGroupId] = useState("")
     const [startAt, setStartAt] = useState("")
     const [endAt, setEndAt] = useState("")
     const [isCreating, setIsCreating] = useState(false)
     const [errors, setErrors] = useState<FieldErrors>({
         title: null,
-        familyGroupId: null,
         startAt: null,
         endAt: null,
         submit: null,
@@ -57,25 +46,16 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
     useEffect(() => {
         if (!open) return
 
-        if (selectedGroupId) {
-            setFamilyGroupId(String(selectedGroupId))
-            return
-        }
-
-        if (familyGroups && familyGroups.length > 0) {
-            setFamilyGroupId(String(familyGroups[0].id))
-        }
-    }, [open, selectedGroupId, familyGroups])
+        setErrors((prev) => ({ ...prev, submit: null }))
+    }, [open])
 
     const handleClose = () => {
         setTitle("")
         setDescription("")
-        setFamilyGroupId("")
         setStartAt("")
         setEndAt("")
         setErrors({
             title: null,
-            familyGroupId: null,
             startAt: null,
             endAt: null,
             submit: null,
@@ -87,7 +67,6 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
         const trimmedTitle = title.trim()
         const nextErrors: FieldErrors = {
             title: null,
-            familyGroupId: null,
             startAt: null,
             endAt: null,
             submit: null,
@@ -96,11 +75,6 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
 
         if (!trimmedTitle) {
             nextErrors.title = "The calendar event title is required."
-            hasError = true
-        }
-        
-        if (!familyGroupId.trim()) {
-            nextErrors.familyGroupId = "Select a family group."
             hasError = true
         }
 
@@ -116,6 +90,14 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
 
         if (hasError) {
             setErrors(nextErrors)
+            return
+        }
+
+        if (!selectedGroupId) {
+            setErrors({
+                ...nextErrors,
+                submit: "Select a family group before creating an event.",
+            })
             return
         }
 
@@ -150,7 +132,7 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
             body: JSON.stringify({
                 title: trimmedTitle,
                 description: description.trim() || "",
-                familyGroupId: Number(familyGroupId.trim()),
+                familyGroupId: selectedGroupId,
                 startAt: startDate.toISOString(),
                 endAt: endDate.toISOString(),
             }),
@@ -167,7 +149,6 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
 
         setTitle("")
         setDescription("")
-        setFamilyGroupId("")
         setStartAt("")
         setEndAt("")
         setErrors(nextErrors)
@@ -220,30 +201,6 @@ const CreateCalendarEventDialog: React.FC<CreateCalendarEventDialogProps> = ({
                         "& .MuiInputBase-input::placeholder": { color: "#f7f7f7", opacity: 1 },
                     }}
                 />
-                <TextField
-                    select
-                    label="Family group"
-                    variant="standard"
-                    value={familyGroupId}
-                    onChange={(e) => {
-                        setFamilyGroupId(e.target.value)
-                        setErrors((prev) => ({ ...prev, familyGroupId: null, submit: null }))
-                    }}
-                    fullWidth
-                    error={Boolean(errors.familyGroupId)}
-                    helperText={errors.familyGroupId ?? " "}
-                    sx={{
-                        "& .MuiInputBase-input": { color: "#f7f7f7" },
-                        "& .MuiInputLabel-root": { color: "#f7f7f7" },
-                        "& .MuiSvgIcon-root": { color: "#f7f7f7" },
-                    }}
-                >
-                    {(familyGroups ?? []).map((group) => (
-                        <MenuItem key={group.id} value={String(group.id)}>
-                            {group.name}
-                        </MenuItem>
-                    ))}
-                </TextField>
                 <TextField
                     label="Start"
                     type="datetime-local"

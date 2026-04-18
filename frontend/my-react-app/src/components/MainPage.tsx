@@ -118,7 +118,6 @@ const MainSite: React.FC<MainPageProps> = ({ currentUser }) => {
                     open={openCreateCalendarEvent}
                     onClose={handleCloseCreateCalendarEvent}
                     cardStyle={cardStyle}
-                    familyGroups={visibleFamilyGroups}
                     selectedGroupId={selectedGroupId}
                     onEventCreated={handleCalendarEventCreated}
                 />
