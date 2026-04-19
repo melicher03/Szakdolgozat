@@ -19,14 +19,12 @@ type CalendarEvent = {
 type CalendarEventPanelProps = {
   onCreateCalendarEvent: () => void
   selectedGroupId: number | null
-  apiBaseUrl?: string
   refreshTrigger?: number
 }
 
 const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   onCreateCalendarEvent,
   selectedGroupId,
-  apiBaseUrl = "http://localhost:3000",
   refreshTrigger = 0,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
@@ -38,10 +36,6 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
     const end = dayjs(endAt).startOf("day")
     const days: string[] = []
 
-    if (end.isBefore(start)) {
-      return
-    }
-
     let current = start
     while (current.isBefore(end) || current.isSame(end, "day")) {
       days.push(current.format("YYYY-MM-DD"))
@@ -51,7 +45,6 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
     return days
   }
 
-  // Fetch calendar events
   useEffect(() => {
     const fetchEvents = async () => {
       if (!selectedGroupId) {
@@ -61,7 +54,7 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
 
       setError(null)
       const response = await fetch(
-        `${apiBaseUrl}/calendar-events?familyGroupId=${selectedGroupId}`
+        `http://localhost:3000/calendar-events?familyGroupId=${selectedGroupId}`
       )
 
       if (!response || !response.ok) {
@@ -74,12 +67,11 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
     }
 
     fetchEvents()
-  }, [selectedGroupId, apiBaseUrl, refreshTrigger])
+  }, [selectedGroupId, refreshTrigger])
 
   // Get events for selected date
-  const eventDays = new Set(
-    events.flatMap((event) => getEventDays(event.startAt, event.endAt))
-  )
+  const eventDays = 
+    events.map((event) => getEventDays(event.startAt, event.endAt)).flat()
 
   const eventsForSelectedDate = events.filter((event) => {
     const selectedDateStart = selectedDate.startOf("day")
@@ -100,7 +92,7 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
 
     setError(null)
 
-    const response = await fetch(`${apiBaseUrl}/calendar-events/${eventId}`, {
+    const response = await fetch(`http://localhost:3000/calendar-events/${eventId}`, {
       method: "DELETE",
     })
 
@@ -114,7 +106,7 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
 
   const Day = (props: PickersDayProps) => {
     const { day, outsideCurrentMonth, ...other } = props
-    const hasEvent = eventDays.has(day.format("YYYY-MM-DD"))
+    const hasEvent = eventDays.includes(day.format("YYYY-MM-DD"))
 
     return (
       <Badge
