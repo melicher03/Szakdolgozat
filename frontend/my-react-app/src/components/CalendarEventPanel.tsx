@@ -69,7 +69,6 @@ const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
     fetchEvents()
   }, [selectedGroupId, refreshTrigger])
 
-  // Get events for selected date
   const eventDays = 
     events.map((event) => getEventDays(event.startAt, event.endAt)).flat()
 
