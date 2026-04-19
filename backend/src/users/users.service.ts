@@ -43,7 +43,6 @@ export class UsersService {
       .map((email) => ({
         email,
       }))
-      .sort((left, right) => left.email.localeCompare(right.email))
   }
 
   async findAll(): Promise<UserSuggestion[]> {

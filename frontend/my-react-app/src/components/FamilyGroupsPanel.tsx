@@ -56,7 +56,7 @@ const FamilyGroupsPanel: React.FC<FamilyGroupsPanelProps> = ({
     ]
 
     return [...new Set(source.map((value) => value.trim().toLowerCase())
-      .filter((value) => value.length > 0),)].sort((left, right) => left.localeCompare(right))
+      .filter((value) => value.length > 0),)]
 
   }, [activeGroup?.members, activeGroup?.ownerId, userOptions])
 

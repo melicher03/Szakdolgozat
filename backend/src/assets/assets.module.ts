@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { AssetCategory } from '../entities/asset-category.entity'
-import { Link } from '../entities/link.entity'
 import { SharedAsset } from '../entities/shared-asset.entity'
 import { FamilyGroup } from '../entities/family-group.entity'
 import { MessagesModule } from '../messages/messages.module'
@@ -9,7 +7,7 @@ import { AssetsController } from './assets.controller'
 import { AssetsService } from './assets.service'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SharedAsset, FamilyGroup, AssetCategory, Link]), MessagesModule],
+  imports: [TypeOrmModule.forFeature([SharedAsset, FamilyGroup]), MessagesModule],
   controllers: [AssetsController],
   providers: [AssetsService],
 })

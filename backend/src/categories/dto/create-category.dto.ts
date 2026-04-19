@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer'
-import { IsInt, IsString, Length } from 'class-validator'
+import { IsInt, IsString } from 'class-validator'
 
-export class CreateAssetCategoryDto {
+export class CreateCategoryDto {
   @Type(() => Number)
   @IsInt()
   familyGroupId: number

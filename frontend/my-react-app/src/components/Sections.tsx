@@ -40,7 +40,6 @@ type AssetCategory = {
 }
 
 type SectionProps = {
-  apiBaseUrl: string
   selectedGroupId: number | null
   onCreateCalendarEvent: () => void
   uploadRefreshTrigger?: number
@@ -52,7 +51,6 @@ const VIDEO_EXTENSIONS = ["mp4", "webm", "mov", "m4v", "avi", "wmv", "flv", "mkv
 
 
 const Sections: React.FC<SectionProps> = ({
-  apiBaseUrl,
   selectedGroupId,
   onCreateCalendarEvent,
   uploadRefreshTrigger,
@@ -97,7 +95,7 @@ const Sections: React.FC<SectionProps> = ({
     }
 
     setError(null)
-    const response = await fetch(`${apiBaseUrl}/assets?familyGroupId=${selectedGroupId}`)
+    const response = await fetch(`http://localhost:3000/assets?familyGroupId=${selectedGroupId}`)
     if (!response || !response.ok) {
       setError("Failed to load group assets.")
       return
@@ -105,7 +103,7 @@ const Sections: React.FC<SectionProps> = ({
 
     const data = (await response.json()) as SharedAsset[]
     setAssets(data)
-  }, [apiBaseUrl, selectedGroupId])
+  }, [selectedGroupId])
 
   const fetchLinks = useCallback(async () => {
     if (!selectedGroupId) {
@@ -113,7 +111,7 @@ const Sections: React.FC<SectionProps> = ({
       return
     }
 
-    const response = await fetch(`${apiBaseUrl}/links?familyGroupId=${selectedGroupId}`)
+    const response = await fetch(`http://localhost:3000/links?familyGroupId=${selectedGroupId}`)
     if (!response || !response.ok) {
       setLinks([])
       return
@@ -121,7 +119,7 @@ const Sections: React.FC<SectionProps> = ({
 
     const data = (await response.json()) as LinkItem[]
     setLinks(data)
-  }, [apiBaseUrl, selectedGroupId])
+  }, [selectedGroupId])
 
   const fetchCategories = useCallback(async () => {
     if (!selectedGroupId) {
@@ -130,7 +128,7 @@ const Sections: React.FC<SectionProps> = ({
     }
 
     const response = await fetch(
-      `${apiBaseUrl}/assets/categories?familyGroupId=${selectedGroupId}`,
+      `http://localhost:3000/categories?familyGroupId=${selectedGroupId}`,
     )
 
     if (!response || !response.ok) {
@@ -139,8 +137,8 @@ const Sections: React.FC<SectionProps> = ({
     }
 
     const data = (await response.json()) as AssetCategory[]
-    setCategories(data.sort((left, right) => left.name.localeCompare(right.name)))
-  }, [apiBaseUrl, selectedGroupId])
+      setCategories(data)
+  }, [selectedGroupId])
 
   useEffect(() => {
     fetchAssets()
@@ -155,12 +153,7 @@ const Sections: React.FC<SectionProps> = ({
       return
     }
 
-    socket = io("http://localhost:3000", {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-    })
+    socket = io("http://localhost:3000")
 
     socket.on("connect", () => {
       socket?.emit("join-group", { familyGroupId: String(selectedGroupId) })
@@ -219,7 +212,7 @@ const Sections: React.FC<SectionProps> = ({
     const trimmed = newCategoryName.trim()
     if (!trimmed) return
 
-    const response = await fetch(`${apiBaseUrl}/assets/categories`, {
+    const response = await fetch('http://localhost:3000/categories', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -238,7 +231,7 @@ const Sections: React.FC<SectionProps> = ({
     const createdCategory = (await response.json()) as AssetCategory
     setCategories((prev) => {
       if (prev.some((category) => category.id === createdCategory.id)) return prev
-      return [...prev, createdCategory].sort((left, right) => left.name.localeCompare(right.name))
+      return [...prev, createdCategory]
     })
     setSelectedSection(createdCategory.name)
     setNewCategoryName("")
@@ -248,7 +241,7 @@ const Sections: React.FC<SectionProps> = ({
   const deleteCategory = async (category: AssetCategory) => {
     setError(null)
 
-    const response = await fetch(`${apiBaseUrl}/assets/categories/${category.id}`, {
+    const response = await fetch(`http://localhost:3000/categories/${category.id}`, {
       method: "DELETE",
     })
 
@@ -423,7 +416,6 @@ const Sections: React.FC<SectionProps> = ({
           <CalendarEventPanel 
           onCreateCalendarEvent={onCreateCalendarEvent}
           selectedGroupId={selectedGroupId}
-            apiBaseUrl={apiBaseUrl}
             refreshTrigger={calendarRefreshTrigger ?? 0 }
             />
         ) : (

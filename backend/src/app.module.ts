@@ -5,6 +5,7 @@ import { CalendarEventsModule } from './calendar-events/calendar-events.module'
 import { FamilyGroupsModule } from './family-groups/family-groups.module'
 import { MessagesModule } from './messages/messages.module'
 import { AssetsModule } from './assets/assets.module'
+import { CategoriesModule } from './categories/categories.module'
 import { LinksModule } from './links/links.module'
 import { UsersModule } from './users/users.module'
 
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module'
     CalendarEventsModule,
     MessagesModule,
     AssetsModule,
+    CategoriesModule,
     LinksModule,
     UsersModule,
   ],

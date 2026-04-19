@@ -66,7 +66,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     }
 
     const response = await fetch(
-      `http://localhost:3000/assets/categories?familyGroupId=${familyGroupId}`,
+      `http://localhost:3000/categories?familyGroupId=${familyGroupId}`,
     )
     if (!response || !response.ok) {
       setCategories([])
