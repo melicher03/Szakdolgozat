@@ -7,6 +7,6 @@ export class MessagesController {
 
   @Get()
   findByFamilyGroup(@Query('familyGroupId') familyGroupId: string) {
-    return this.messagesService.findByFamilyGroup(familyGroupId)
+    return this.messagesService.findByFamilyGroup(Number(familyGroupId))
   }
 }

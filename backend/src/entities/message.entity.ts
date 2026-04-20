@@ -2,8 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
+import { FamilyGroup } from './family-group.entity'
 
 @Entity('messages')
 export class Message {
@@ -20,7 +23,11 @@ export class Message {
   senderName: string
 
   @Column()
-  familyGroupId: string
+  familyGroupId: number
+
+  @ManyToOne(() => FamilyGroup, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'familyGroupId' })
+  familyGroup: FamilyGroup
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date

@@ -137,7 +137,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       setCurrentSocket(socket)
 
       socket.on('connect', () => {
-        console.log('WebSocket connected')
         setIsConnected(true)
         socket?.emit('join-group', { familyGroupId })
       })
@@ -248,7 +247,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       body: JSON.stringify({
         familyGroupId: Number(familyGroupId),
         storagePath,
-        fileSize: selectedFile.size,
         categoryName: category,
       }),
     })

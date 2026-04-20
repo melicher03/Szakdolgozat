@@ -16,7 +16,7 @@ export class MessagesService {
     return this.messagesRepository.save(message)
   }
 
-  async findByFamilyGroup(familyGroupId: string): Promise<Message[]> {
+  async findByFamilyGroup(familyGroupId: number): Promise<Message[]> {
     return this.messagesRepository.find({
       where: { familyGroupId },
       order: { createdAt: 'ASC' },

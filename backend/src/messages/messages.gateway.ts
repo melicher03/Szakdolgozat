@@ -29,7 +29,7 @@ export class MessagesGateway {
     @MessageBody() dto: CreateMessageDto,
   ) {
     const message = await this.messagesService.create(dto)
-    this.server.to(dto.familyGroupId).emit('receive-message', message)
+    this.server.to(String(dto.familyGroupId)).emit('receive-message', message)
   }
 
   @SubscribeMessage('leave-group')

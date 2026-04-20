@@ -55,7 +55,7 @@ export class FamilyGroupsService {
   }
 
   findAll(): Promise<FamilyGroup[]> {
-    return this.familyGroupsRepository.find({ order: { name: 'ASC' } })
+    return this.familyGroupsRepository.find()
   }
 
   async update(id: string, updateFamilyGroupDto: UpdateFamilyGroupDto): Promise<FamilyGroup> {

@@ -42,7 +42,7 @@ type AssetCategory = {
 type SectionProps = {
   selectedGroupId: number | null
   onCreateCalendarEvent: () => void
-  uploadRefreshTrigger?: number
+  uploadRefreshTrigger: number
   calendarRefreshTrigger?: number
 }
 
@@ -56,7 +56,6 @@ const Sections: React.FC<SectionProps> = ({
   uploadRefreshTrigger,
   calendarRefreshTrigger,
 }) => {
-  const storageBucket = "media"
   const [assets, setAssets] = useState<SharedAsset[]>([])
   const [links, setLinks] = useState<LinkItem[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -72,7 +71,7 @@ const Sections: React.FC<SectionProps> = ({
   }
 
   const getPublicFileUrl = (storagePath: string): string =>
-    supabase.storage.from(storageBucket).getPublicUrl(storagePath).data.publicUrl
+    supabase.storage.from("media").getPublicUrl(storagePath).data.publicUrl
   
   const getFileType = (value: string): "image" | "video" | null => {
     const extension = getFileExtension(value)
@@ -199,10 +198,8 @@ const Sections: React.FC<SectionProps> = ({
     }
   }, [categories, selectedSection])
   useEffect(() => {
-    if (uploadRefreshTrigger !== undefined && uploadRefreshTrigger > 0) {
-      void fetchAssets()
-      void fetchLinks()
-    }
+    fetchAssets()
+    fetchLinks()
   }, [uploadRefreshTrigger, fetchAssets, fetchLinks])
 
   
@@ -254,8 +251,8 @@ const Sections: React.FC<SectionProps> = ({
     if (selectedSection === category.name) {
       setSelectedSection("calendar")
     }
-    await fetchAssets()
-    await fetchCategories()
+    fetchAssets()
+    fetchCategories()
   }
 
   const filteredAssets = useMemo(() => {
